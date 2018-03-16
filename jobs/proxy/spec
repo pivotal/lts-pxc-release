@@ -31,7 +31,7 @@ provides:
 
 packages:
 - switchboard
-- cf-mysql-common
+- cf-mysql-common-pxc
 
 properties:
 

@@ -1,0 +1,5 @@
+---
+name: cf-mysql-common-pxc
+files:
+- cf-mysql-common/pid_utils.sh
+- cf-mysql-common/logging.sh
