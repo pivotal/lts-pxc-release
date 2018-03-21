@@ -3,8 +3,8 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"io"
 	"os"
-	"strings"
 
 	"os/exec"
 	"time"
@@ -32,14 +32,7 @@ func main() {
 		panic(err)
 	}
 
-	dsn = fmt.Sprintf("%s:%s@unix(%s)/", "root", rootPassword, "/var/vcap/sys/run/mysql-clustered/mysqld.sock")
-	pxcDatabaseConnection, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("retrieveing tables...")
-
+	fmt.Println("retrieving databases...")
 	// Get all the database names
 	query := "select schema_name from information_schema.schemata where schema_name NOT IN ('performance_schema', 'mysql', 'information_schema')"
 
@@ -55,170 +48,58 @@ func main() {
 		databaseNames = append(databaseNames, databaseName)
 	}
 
-	// Get all the table names
-	query = "select CONCAT('`',table_schema,'`.`',table_name,'`') from information_schema.tables where table_schema NOT IN ('performance_schema', 'mysql', 'information_schema')"
+	fmt.Println("migrating data...")
 
-	rows, err = mariadbDatabaseConnection.Query(query)
-	if err != nil {
+	dumpArgs := []string{
+		"/var/vcap/packages/pxc/bin/mysqldump",
+		"--defaults-file=/var/vcap/jobs/mysql/config/mylogin.cnf",
+		"--verbose",
+		"--databases",
+	}
+
+	dumpArgs = append(dumpArgs, databaseNames...)
+
+	loadArgs := []string{
+		"/var/vcap/packages/pxc/bin/mysql",
+		"--defaults-file=/var/vcap/jobs/mysql-clustered/config/mylogin.cnf",
+		"--verbose",
+	}
+
+	dumpCmd := exec.Command(dumpArgs[0], dumpArgs[1:]...)
+	loadCmd := exec.Command(loadArgs[0], loadArgs[1:]...)
+
+	pr, pw := io.Pipe()
+	dumpCmd.Stdout = pw
+	loadCmd.Stdin = pr
+
+	dumpCmd.Stderr = os.Stderr
+	loadCmd.Stderr = os.Stderr
+	loadCmd.Stdout = os.Stdout
+
+	if err := dumpCmd.Start(); err != nil {
 		panic(err)
 	}
 
-	var tableNames []string
-	for rows.Next() {
-		var tableName string
-		rows.Scan(&tableName)
-		tableNames = append(tableNames, tableName)
-	}
-	rows.Close()
-
-	fmt.Println("flushing tables for export...")
-
-	// Get all flush tables queries
-	tableNamesCommas := strings.Join(tableNames, ",")
-	flushTablesStatement := "FLUSH TABLES " + tableNamesCommas + " FOR EXPORT"
-
-	_, err = mariadbDatabaseConnection.Exec(flushTablesStatement)
-	if err != nil {
+	if err := loadCmd.Start(); err != nil {
 		panic(err)
 	}
 
-	fmt.Println("dumping schema from mariadb...")
+	go func() {
+		defer pw.Close()
 
-	// Get the .sql file that will create all the tables
-	// /var/vcap/packages/mariadb/bin/mysqldump -uroot -pfe2112zaxlw7oaumut6a --no-data --databases [dbname, dbname] > seededschemas.sql
-	dbNamesSpaces := strings.Join(databaseNames, " ")
-	os.Chdir("/var/vcap/store/")
-	mysqlDumpCmd := exec.Command("bash", "-c", "/var/vcap/packages/mariadb/bin/mysqldump --defaults-file=/var/vcap/jobs/mysql/config/mylogin.cnf --no-data --skip-lock-tables --databases "+dbNamesSpaces+" > seededschemas.sql")
-	out, err := mysqlDumpCmd.CombinedOutput()
-	if err != nil {
-		println(err.Error())
-		println(string(out))
-		panic(err)
-	}
-
-	fmt.Println("loading schema into pxc...")
-
-	mysqlLoadCmd := exec.Command("bash", "-c", "/var/vcap/packages/pxc/bin/mysql --defaults-file=/var/vcap/jobs/mysql-clustered/config/mylogin.cnf < seededschemas.sql")
-	out, err = mysqlLoadCmd.CombinedOutput()
-	if err != nil {
-		println(err.Error())
-		println(string(out))
-		panic(err)
-	}
-
-	fmt.Println("updating row formats...")
-
-	// Update row formats to mariadb default innodb format
-	query = "select CONCAT('ALTER TABLE `',table_schema,'`.`',table_name,'` ROW_FORMAT=compact') from information_schema.tables where table_schema NOT IN ('performance_schema','mysql','information_schema','sys');"
-	rows, err = pxcDatabaseConnection.Query(query)
-	if err != nil {
-		panic(err)
-	}
-	var rowFormatQueries []string
-	for rows.Next() {
-		var rowFormatQuery string
-		rows.Scan(&rowFormatQuery)
-		rowFormatQueries = append(rowFormatQueries, rowFormatQuery)
-	}
-	for _, rowFormatStatement := range rowFormatQueries {
-		_, err = pxcDatabaseConnection.Exec(rowFormatStatement)
-		if err != nil {
+		if err := dumpCmd.Wait(); err != nil {
 			panic(err)
 		}
-	}
+	}()
 
-	// disable foreign keys
-	_, err = pxcDatabaseConnection.Exec("set foreign_key_checks=0")
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println("discarding tablespaces...")
-
-	// Discard Tablespaces
-	query = "select CONCAT('ALTER TABLE `',table_schema,'`.`',table_name,'` DISCARD TABLESPACE') from information_schema.tables where table_schema NOT IN ('performance_schema','mysql','information_schema','sys');"
-	rows, err = pxcDatabaseConnection.Query(query)
-	if err != nil {
-		panic(err)
-	}
-	var discardTableSpaceQueries []string
-	for rows.Next() {
-		var discardTableSpaceQuery string
-		rows.Scan(&discardTableSpaceQuery)
-		discardTableSpaceQueries = append(discardTableSpaceQueries, discardTableSpaceQuery)
-	}
-	for _, discardTableSpaceStatement := range discardTableSpaceQueries {
-		_, err = pxcDatabaseConnection.Exec(discardTableSpaceStatement)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	fmt.Println("copying innodb data...")
-
-	// Copy all the .ibd and .cfg files from /var/vcap/store/mysql to /var/vcap/store/mysql-clustered
-	os.Chdir("/var/vcap/store/mysql")
-	//rsyncCmd := exec.Command("bash", "-c", "rsync -av --exclude='mysql' --exclude='performance_schema' --include='**/*.ibd' --include='**/*.cfg' --include='*/' --exclude='*' . ../mysql-clustered")
-	rsyncCmd := exec.Command("bash", "-c", "rsync -av --exclude='mysql' --exclude='performance_schema' --include='**/*.ibd' --include='*/' --exclude='*' . ../mysql-clustered")
-	out, err = rsyncCmd.CombinedOutput()
-	if err != nil {
-		println(err.Error())
-		println(string(out))
-		panic(err)
-	}
-
-	fmt.Println("importing tablespaces...")
-
-	// Import Tablespaces
-	query = "select CONCAT('ALTER TABLE `',table_schema,'`.`',table_name,'` IMPORT TABLESPACE') from information_schema.tables where table_schema NOT IN ('performance_schema', 'mysql', 'information_schema','sys');"
-	rows, err = pxcDatabaseConnection.Query(query)
-	if err != nil {
-		panic(err)
-	}
-	var importTableSpaceQueries []string
-	for rows.Next() {
-		var importTableSpaceQuery string
-		rows.Scan(&importTableSpaceQuery)
-		importTableSpaceQueries = append(importTableSpaceQueries, importTableSpaceQuery)
-	}
-	for _, importTableSpaceStatement := range importTableSpaceQueries {
-		fmt.Println(importTableSpaceStatement)
-		_, err = pxcDatabaseConnection.Exec(importTableSpaceStatement)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	// Update row formats to 'default' mysql 5.7
-	query = "select CONCAT('ALTER TABLE `',table_schema,'`.`',table_name,'` ROW_FORMAT=default') from information_schema.tables where table_schema NOT IN ('performance_schema', 'mysql', 'information_schema','sys');"
-	rows, err = pxcDatabaseConnection.Query(query)
-	if err != nil {
-		panic(err)
-	}
-
-	rowFormatQueries = []string{}
-	for rows.Next() {
-		var rowFormatQuery string
-		rows.Scan(&rowFormatQuery)
-		rowFormatQueries = append(rowFormatQueries, rowFormatQuery)
-	}
-	for _, rowFormatStatement := range rowFormatQueries {
-		_, err = pxcDatabaseConnection.Exec(rowFormatStatement)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	// reenable foreign keys
-	_, err = pxcDatabaseConnection.Exec("set foreign_key_checks=1")
-	if err != nil {
+	if err := loadCmd.Wait(); err != nil {
 		panic(err)
 	}
 
 	fmt.Println("stopping mariadb...")
 
 	mariadbShutdownCmd := exec.Command("/var/vcap/packages/mariadb/support-files/mysql.server", "stop", "--pid-file=/var/vcap/sys/run/mysql/mysql.pid")
-	out, err = mariadbShutdownCmd.CombinedOutput()
+	out, err := mariadbShutdownCmd.CombinedOutput()
 	if err != nil {
 		println(err.Error())
 		println(string(out))
