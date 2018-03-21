@@ -1,0 +1,2 @@
+#!/bin/bash
+cp -a pid-utils/* ${BOSH_INSTALL_TARGET}

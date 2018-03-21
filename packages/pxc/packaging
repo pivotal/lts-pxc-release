@@ -11,7 +11,7 @@ make -C libaio-*/ install
 
 ## PXC
 tar -xf "pxc/Percona-XtraDB-Cluster-${PERCONA_SERVER_VERSION}.tar.gz"
-pushd "Percona-XtraDB-Cluster-${PERCONA_SERVER_VERSION}/"
+    pushd "Percona-XtraDB-Cluster-${PERCONA_SERVER_VERSION}/"
     wsrep_iface_version="$(grep WSREP_INTERFACE_VERSION wsrep/wsrep_api.h | cut -d '"' -f2)"
     wsrep_patch_version="$(grep 'SET(WSREP_PATCH_VERSION'  "cmake/wsrep.cmake" | cut -d '"' -f2)"
     wsrep_version="${wsrep_iface_version}.${wsrep_patch_version}"
