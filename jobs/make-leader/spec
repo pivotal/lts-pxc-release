@@ -1,0 +1,5 @@
+---
+name: make-leader
+
+templates:
+  make-leader.erb: bin/run

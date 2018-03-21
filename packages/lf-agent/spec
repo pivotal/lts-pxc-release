@@ -1,0 +1,8 @@
+---
+name: lf-agent
+
+dependencies:
+    - golang
+
+files:
+    - lf-agent/**/*

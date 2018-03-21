@@ -1,0 +1,5 @@
+---
+name: inspect
+
+templates:
+  inspect.erb: bin/run

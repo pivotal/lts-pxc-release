@@ -1,0 +1,9 @@
+---
+name: configure-leader-follower
+
+dependencies:
+- golang
+
+files:
+    - lf-agent/**/*
+

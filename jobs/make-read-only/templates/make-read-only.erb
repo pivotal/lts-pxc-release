@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -e
+
+CONFIG_PATH=/var/vcap/jobs/lf-agent/config/lf-agent.yml \
+  /var/vcap/packages/configure-leader-follower/bin/configure-leader-follower \
+  make-read-only 2>&1

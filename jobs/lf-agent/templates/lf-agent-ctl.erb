@@ -1,0 +1,40 @@
+#!/bin/bash
+
+set -e
+
+PROC_NAME=lf-agent
+RUN_DIR=/var/vcap/sys/run/$PROC_NAME
+PIDFILE=$RUN_DIR/$PROC_NAME.pid
+LOG_DIR=/var/vcap/sys/log/lf-agent
+
+source /var/vcap/packages/pid-utils/pid-utils.sh
+
+ulimit -n 65536
+
+case $1 in
+
+  start)
+    mkdir -p "${RUN_DIR}"
+    chown vcap:vcap "${RUN_DIR}"
+
+    pid_guard $PIDFILE $PROC_NAME
+
+    mkdir -p "${LOG_DIR}"
+    chown vcap:vcap "${LOG_DIR}"
+
+    echo $$ > $PIDFILE
+    exec chpst -u vcap:vcap \
+      /var/vcap/packages/lf-agent/bin/lf-agent \
+      /var/vcap/jobs/lf-agent/config/lf-agent.yml \
+      >> ${LOG_DIR}/lf-agent.log 2>&1
+    ;;
+
+  stop)
+    kill_and_wait $PIDFILE
+    ;;
+
+  *)
+    echo "Usage: lf-agent-ctl {start|stop}"
+    ;;
+
+esac

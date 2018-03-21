@@ -1,0 +1,5 @@
+---
+name: make-read-only
+
+templates:
+  make-read-only.erb: bin/run

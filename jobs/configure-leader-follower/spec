@@ -1,0 +1,8 @@
+---
+name: configure-leader-follower
+
+packages:
+- configure-leader-follower
+
+templates:
+  configure-leader-follower.erb: bin/run

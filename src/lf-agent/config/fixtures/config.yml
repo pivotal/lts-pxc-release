@@ -1,0 +1,27 @@
+---
+host_address: "10.0.0.1"
+peer_address: "10.0.0.2"
+data_dir: "/var/vcap/store/mysql/data"
+enable_heartbeats: true
+lf_state_dir: "/path/to/lf-state-dir"
+replication_admin_password: "mysql-admin-password"
+replication_admin_user: "mysql-admin-user"
+replication_password: "mysql-password"
+replication_user: "mysql-user"
+replication_wait_timeout_in_seconds: 10
+replication_mode: semi-sync
+port: "8008"
+http_authorization_username: test-user
+http_authorization_password: test-password
+streaming_backup_port: "8081"
+streaming_backup_http_username: "streaming-backup-username"
+streaming_backup_http_password: "streaming-backup-password"
+streaming_backup_ca_cert_path: "/path/to/streaming-backup-ca.cert"
+streaming_backup_ssl_common_name: "streaming-backup-common-name"
+ssl_server_cert_path: "/path/to/server.cert"
+ssl_server_key_path: "/path/to/server.key"
+ssl_client_cert_path: "/path/to/client.cert"
+ssl_client_key_path: "/path/to/client.key"
+ssl_ca_cert_path: "/path/to/server.ca"
+ssl_common_name: "lf-agent-common"
+mysql_ca_cert_path: "/path/to/mysql/mysql.ca"

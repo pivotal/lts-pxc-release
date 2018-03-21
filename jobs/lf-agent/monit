@@ -1,0 +1,5 @@
+check process lf-agent
+  with pidfile /var/vcap/sys/run/lf-agent/lf-agent.pid
+  start program "/var/vcap/jobs/lf-agent/bin/lf-agent-ctl start"
+  stop program "/var/vcap/jobs/lf-agent/bin/lf-agent-ctl stop" with timeout 30 seconds
+  group vcap

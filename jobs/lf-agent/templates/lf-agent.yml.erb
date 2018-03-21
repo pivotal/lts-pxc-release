@@ -1,0 +1,35 @@
+<%
+raise "Expected exactly two instances in current deployment" if link('mysql').instances.length != 2
+%>
+
+<%
+config = {
+  "host_address" => link('mysql').instances.select { |i| i.index == spec.index }.map(&:address).first,
+  "peer_address" => link('mysql').instances.select { |i| i.index != spec.index }.map(&:address).first,
+  "data_dir" => "/var/vcap/store/mysql/data",
+  "enable_heartbeats" => raw_properties["mysql_metrics_password"].nil? ? false : true,
+  "lf_state_dir" => "/var/vcap/sys/run/mysql/lf-state",
+  "replication_user" => "replication",
+  "replication_password" => p('replication_password'),
+  "replication_admin_user" => "replication-admin",
+  "replication_admin_password" => p('replication_admin_password'),
+  "replication_mode" => p('leader_follower.replication_mode'),
+  "port" => 8443,
+  "http_authorization_username" => p('http_authorization_username'),
+  "http_authorization_password" => p('http_authorization_password'),
+  "mysql_ca_cert_path" =>  "/var/vcap/jobs/mysql/certificates/ca.pem",
+  "replication_wait_timeout_in_seconds" => p('replication_wait_timeout_in_seconds'),
+  "streaming_backup_port" => 8081,
+  "streaming_backup_http_username" => p('cf-mysql-backup.endpoint_credentials.username'),
+  "streaming_backup_http_password" => p('cf-mysql-backup.endpoint_credentials.password'),
+  "streaming_backup_ca_cert_path" => "/var/vcap/jobs/lf-agent/config/streaming_backup_ca.crt",
+  "streaming_backup_ssl_common_name" => p('cf-mysql-backup.tls.server_name'),
+  "ssl_server_cert_path" => "/var/vcap/jobs/lf-agent/config/server.crt",
+  "ssl_server_key_path" => "/var/vcap/jobs/lf-agent/config/server.key",
+  "ssl_client_cert_path" => "/var/vcap/jobs/lf-agent/config/client.crt",
+  "ssl_client_key_path" => "/var/vcap/jobs/lf-agent/config/client.key",
+  "ssl_ca_cert_path" => "/var/vcap/jobs/lf-agent/config/ca.crt",
+  "ssl_common_name" =>  p('leader_follower.ssl.common_name'),
+}
+%>
+<%= config.to_yaml %>

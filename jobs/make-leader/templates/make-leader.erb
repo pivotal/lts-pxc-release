@@ -1,0 +1,6 @@
+#!/bin/bash
+set -eu
+
+CONFIG_PATH=/var/vcap/jobs/lf-agent/config/lf-agent.yml \
+  /var/vcap/packages/configure-leader-follower/bin/configure-leader-follower \
+  make-leader 2>&1

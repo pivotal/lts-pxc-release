@@ -1,0 +1,51 @@
+---
+name: lf-agent
+
+consumes:
+- name: mysql
+  type: mysql
+
+packages:
+- lf-agent
+
+templates:
+  lf-agent-ctl.erb: bin/lf-agent-ctl
+  lf-agent.yml.erb: config/lf-agent.yml
+  ca.crt.erb: config/ca.crt
+  client.crt.erb: config/client.crt
+  client.key.erb: config/client.key
+  server.crt.erb: config/server.crt
+  server.key.erb: config/server.key
+  streaming_backup_ca.crt.erb: config/streaming_backup_ca.crt
+
+properties:
+  replication_admin_password:
+    description: Password for the MySQL replication-admin user
+  replication_password:
+    description: Password for the MySQL replication user
+  mysql_metrics_password:
+    description: Password for the MySQL metrics user
+  http_authorization_username:
+    description: HTTP Basic Auth username
+  http_authorization_password:
+    description: HTTP Basic Auth password
+  replication_wait_timeout_in_seconds:
+    description: Time in seconds to wait for replication logs to apply
+    default: 300
+  leader_follower.replication_mode:
+    description: Which replication mode to use of asynchronous (`async`) or semi-synchronous (`semi-sync`)
+    default: async
+  cf-mysql-backup.endpoint_credentials.username:
+    description: Username for backup endpoint
+  cf-mysql-backup.endpoint_credentials.password:
+    description: Password for backup endpoint
+  leader_follower.ssl.common_name:
+    description: Common Name for use with SSL server/client certificates
+  leader_follower.ssl.server:
+    description: SSL private/public keypair for server auth
+  leader_follower.ssl.client:
+    description: SSL private/public keypair for client auth
+  cf-mysql-backup.tls.ca_certificate:
+    description: 'CA certificate'
+  cf-mysql-backup.tls.server_name:
+    description: 'Common Name of the server certificate'
