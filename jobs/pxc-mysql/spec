@@ -102,7 +102,6 @@ properties:
     default: utf8
   collation_server:
     description: 'Default collation. Use SHOW COLLATION to view the valid collations for your character set.'
-    default: utf8_unicode_ci
   max_open_files:
     description: 'Configure this number to be comfortably larger than the maximum number of tables you expect the database to support.'
     default: 65536
@@ -128,7 +127,7 @@ properties:
     default: true
   innodb_strict_mode:
     description: 'Whether innodb_strict_mode is enabled'
-    default: false
+    default: true
   max_allowed_packet:
     description: 'The maximum size in bytes of a packet or a generated/intermediate string'
     default: 256M
@@ -143,7 +142,7 @@ properties:
     default: 2000
   tmp_table_size:
     description: 'The maximum size (in bytes) of internal in-memory temporary tables'
-    default: 33554432
+    default: 16777216
   wsrep_max_ws_rows:
     description: 'Maximum permitted number of rows per writeset.'
     default: 0
@@ -224,13 +223,12 @@ properties:
   startup_timeout:
     default: 60
     description: 'Number of seconds that monit should wait for mysql to start before giving up'
-  enable_local_file:
-    default: true
-    description: 'Allow or disallow clients to access local files'
   enable_lower_case_table_names:
     default: false
     description: Enable or disable the "lower_case_table_names" MySQL server variable via a boolean of true/false.
-
+  local_infile:
+    default: true
+    description: 'Allow or disallow clients to access local files'
   long_query_time:
     default: 10
     description: 'Threshold in seconds above which SQL queries get logged in the slow query log file'
@@ -238,6 +236,10 @@ properties:
   leader_follower.enabled:
     description: Indicate that the VM is spun up with the intention of replication
     default: false
+
+  sync_binlog:
+    default: true
+    description: 'Enable binlogs across all nodes'
 
   audit_log.enabled:
     default: false

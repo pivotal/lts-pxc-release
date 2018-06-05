@@ -54,7 +54,7 @@ socket                          = <%= "#{base_folder}/mysqld.sock" %>
 !include                        /var/vcap/jobs/pxc-mysql/config/auto-tune.cnf
 
 [mysqld]
-server-id                       = <%= index %>
+server-id                       = <%= 1 + index %>
 ssl-ca=/var/vcap/jobs/pxc-mysql/certificates/server-ca.pem
 ssl-cert=/var/vcap/jobs/pxc-mysql/certificates/server-cert.pem
 ssl-key=/var/vcap/jobs/pxc-mysql/certificates/server-key.pem
@@ -78,14 +78,22 @@ wsrep_max_ws_size               = <%= p('wsrep_max_ws_size') %>
 wsrep_load_data_splitting       = ON
 wsrep_replicate_myisam          = OFF
 wsrep_debug                     = <%= p('wsrep_debug') %>
+sql-mode                        = NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES
+# required for galera
+innodb_support_xa               = OFF
 <% if p('log_conflicts') %>
 wsrep_log_conflicts             = ON
 <% end %>
 <% end %>
 
 # Regular MYSQL options:
-character_set_server            = <%= p('character_set_server') %>
-collation_server                = <%= p('collation_server') %>
+#character_set_server            = <%= p('character_set_server') %>
+#collation_server                = <%= p('collation_server') %>
+# Character Set
+character-set-server = <%= p('default_char_set') %>
+<% if_p('default_collation') do |value| %>
+collation-server = <%= value %>
+<% end %>
 user                            = vcap
 socket                          = <%= "#{base_folder}/mysqld.sock" %>
 port                            = <%= p('port') %>
@@ -106,13 +114,7 @@ skip_name_resolve               = ON
 #enforce_storage_engine          = InnoDB
 #FIXME: mysql_upgrade fails if this is turned on
 
-sql-mode                        = NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES
-
-<% if p('enable_local_file') %>
-local-infile                    = ON
-<% else %>
-local-infile                    = OFF
-<% end %>
+local-infile                    = <%= bool_to_on_off(p('local_infile')) %>
 <% if p('binlog_enabled') %>
 log-bin                         = mysql-bin
 log-slave-updates               = ON
@@ -121,6 +123,7 @@ expire-logs-days                = <%= p('binlog_expire_days') %>
 <% end %>
 
 # Replication
+<% if !p('enable_galera') %>
 binlog-row-image                = minimal
 binlog-rows-query-log-events    = ON
 binlog-stmt-cache-size          = 4M
@@ -136,8 +139,10 @@ relay-log-info-repository       = TABLE
 slave-sql-verify-checksum       = ON
 super-read-only                 = <%= p('leader_follower.enabled') ? "ON" : "OFF" %>
 relay-log-recovery = ON
+sync-binlog = <%= p('sync_binlog') %>
 
 !includedir /var/vcap/sys/run/pxc-mysql/lf-state
+<% end %>
 
 <% if p('leader_follower.enabled') && p('leader_follower.replication_mode') == 'semi-sync' %>
 plugin-load-add                 = semisync_master.so
@@ -158,29 +163,22 @@ long_query_time                 = <%= p('long_query_time') %>
 log_queries_not_using_indexes   = ON
 <% end %>
 
+max_heap_table_size             = <%= p('max_heap_table_size') %>
+tmp_table_size                  = <%= p('tmp_table_size') %>
+query_cache_type                = OFF
+
 # User statistics
 userstat                        = <%= bool_to_on_off(p('userstat')) %>
 
 innodb_file_per_table           = ON
 innodb_log_file_size            = <%= p('ib_log_file_size')%>MB
-innodb_support_xa               = OFF
-<% if p('innodb_large_prefix_enabled') %>
-innodb_large_prefix             = ON
-<% else %>
-innodb_large_prefix             = OFF
-<% end %>
-<% if p('innodb_strict_mode') %>
-innodb_strict_mode              = ON
-<% else %>
-innodb_strict_mode              = OFF
-<% end %>
 
-max_heap_table_size             = <%= p('max_heap_table_size') %>
-tmp_table_size                  = <%= p('tmp_table_size') %>
+innodb_large_prefix             = = <%= bool_to_on_off(p('innodb_large_prefix_enabled')) %>
+
+innodb_strict_mode             = = <%= bool_to_on_off(p('innodb_strict_mode')) %>
 
 # These are mandatory MySQL settings for Galera to work
 innodb_autoinc_lock_mode        = 2
-query_cache_type                = OFF
 
 <%
   if not [0, 1, 2].include?(p('innodb_flush_log_at_trx_commit'))
@@ -218,11 +216,14 @@ audit_log_format                = JSON
 audit_log_exclude_accounts      = "<%= excluded_audit_users.join(',') %>"
 <% end %>
 
+# SST tls
+<% if p('enable_galera') %>
 [sst]
 encrypt=4
 ssl-ca=/var/vcap/jobs/pxc-mysql/certificates/galera-ca.pem
 ssl-cert=/var/vcap/jobs/pxc-mysql/certificates/galera-cert.pem
 ssl-key=/var/vcap/jobs/pxc-mysql/certificates/galera-key.pem
+<% end %>
 
 [mysqldump]
 quick
