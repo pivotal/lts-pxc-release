@@ -16,6 +16,7 @@
         admin_password: ((cf_mysql_mysql_admin_password))
         cluster_health:
           password: ((cf_mysql_mysql_cluster_health_password))
+        event_scheduler: false
         galera_agent:
           endpoint_password: ((cf_mysql_mysql_galera_healthcheck_endpoint_password))
           db_password: ((cf_mysql_mysql_galera_healthcheck_db_password))

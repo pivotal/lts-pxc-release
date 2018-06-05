@@ -94,6 +94,9 @@ properties:
     description: 'TLS certificate for galera cluster encryption'
   tls.server:
     description: 'TLS certificate for client-server encryption'
+  require_secure_transport:
+    description: Require a secure transport for all client connections to the MySQL database server
+    default: false
   character_set_server:
     description: 'Default character set. Note that while the MySQL default is latin1, we default to utf8.'
     default: utf8
@@ -147,14 +150,11 @@ properties:
   wsrep_max_ws_size:
     description: 'Maximum permitted size in bytes per writeset.'
     default: 1073741824
-  skip_name_resolve:
-    description: 'Do not restrict connections to database based on hostname'
-    default: true
   gcache_size:
     description: 'Cache size used by galera (maximum amount of data possible in an IST), in MB'
     default: 512
-  ib_log_file_size:
-    description: 'Size of the ib_log_file used by innodb, in MB'
+  innodb_log_file_size:
+    description: 'Size of the innodb_log_file_size used by innodb, in MB'
     default: 1024
   seeded_databases:
     description: 'Set of databases to seed'
@@ -219,7 +219,7 @@ properties:
     default: false
     description: "Queries that don't use an index, or that perform a full index scan where the index doesn't limit the number of rows, will be logged to the slow query log."
   event_scheduler:
-    default: "OFF"
+    default: true
     description: Events are named database objects containing SQL statements that are to be executed at a later stage, either once off, or at regular intervals.
   startup_timeout:
     default: 60
@@ -227,26 +227,33 @@ properties:
   enable_local_file:
     default: true
     description: 'Allow or disallow clients to access local files'
+  enable_lower_case_table_names:
+    default: false
+    description: Enable or disable the "lower_case_table_names" MySQL server variable via a boolean of true/false.
 
   long_query_time:
     default: 10
     description: 'Threshold in seconds above which SQL queries get logged in the slow query log file'
 
-  server_audit_logs_enabled:
+  leader_follower.enabled:
+    description: Indicate that the VM is spun up with the intention of replication
+    default: false
+
+  audit_log.enabled:
     default: false
     description: 'Enable audit logging'
-  server_audit_file_rotations:
+  audit_log.log_file_rotations:
     default: 30
     description: 'Number of audit file rotations to keep'
-  server_audit_file_rotate_size_in_mb:
+  audit_log.log_file_rotate_size_in_mb:
     default: 100
     description: 'Size in MB of each audit log file'
-  server_audit_excluded_users:
+  audit_log.excluded_users:
     default: []
     description: 'Database users to exclude from audit logging'
     example: |
       - monitoring_user
       - other_excluded_user
       - bot_user
-  server_audit_excluded_users_csv:
+  audit_log.excluded_users_csv:
     description: 'Additional database users to exclude from audit logging, will be combined with uses specified in server_audit_excluded_users'

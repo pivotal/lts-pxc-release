@@ -30,6 +30,11 @@
     ["'galera-agent'@'127.0.0.1'", "'cluster-health-logger'@'127.0.0.1'"] + users.collect {|user| "'#{user}'@'%'"}
   end
 
+  def bool_to_on_off(boolean)
+    return "ON" if boolean
+    "OFF"
+  end
+
   node_host = discover_external_ip
   if_p('advertise_host') do |advertise_host|
     node_host = advertise_host
@@ -53,6 +58,8 @@ server-id                       = <%= index %>
 ssl-ca=/var/vcap/jobs/pxc-mysql/certificates/server-ca.pem
 ssl-cert=/var/vcap/jobs/pxc-mysql/certificates/server-cert.pem
 ssl-key=/var/vcap/jobs/pxc-mysql/certificates/server-key.pem
+
+require-secure-transport = <%= bool_to_on_off(p('require_secure_transport')) %>
 
 <% if p('enable_galera') %>
 # GALERA options:
@@ -85,20 +92,16 @@ port                            = <%= p('port') %>
 basedir                         = /var/vcap/packages/pxc
 datadir                         = /var/vcap/store/pxc-mysql
 tmpdir                          = /var/vcap/data/pxc-mysql/tmp
-language                        = /var/vcap/packages/pxc/share
 pid-file                        = /var/vcap/sys/run/pxc-mysql/mysql.pid
 log_error                       = /var/vcap/sys/log/pxc-mysql/mysql.err.log
 init_file                       = /var/vcap/jobs/pxc-mysql/config/db_init
-skip_external_locking           = TRUE
 symbolic-links                  = OFF
 secure_file_priv                = /var/vcap/data/pxc-mysql/files
 table_definition_cache          = <%= p('table_definition_cache_size') %>
 table_open_cache                = <%= p('table_open_cache') %>
 
 max_allowed_packet              = <%= p('max_allowed_packet') %>
-<% if_p('skip_name_resolve') do |disable_dns| %>
-<%= "skip_name_resolve" if disable_dns %>
-<% end %>
+skip_name_resolve               = ON
 
 #enforce_storage_engine          = InnoDB
 #FIXME: mysql_upgrade fails if this is turned on
@@ -106,21 +109,49 @@ max_allowed_packet              = <%= p('max_allowed_packet') %>
 sql-mode                        = NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,STRICT_ALL_TABLES
 
 <% if p('enable_local_file') %>
-local_infile                    = ON
+local-infile                    = ON
 <% else %>
-local_infile                    = OFF
+local-infile                    = OFF
 <% end %>
 <% if p('binlog_enabled') %>
-log_bin                         = mysql-bin
-log_slave_updates               = 1
-expire_logs_days                = <%= p('binlog_expire_days') %>
+log-bin                         = mysql-bin
+log-slave-updates               = ON
+log-bin-trust-function-creators = ON
+expire-logs-days                = <%= p('binlog_expire_days') %>
 <% end %>
+
+# Replication
+binlog-row-image                = minimal
+binlog-rows-query-log-events    = ON
+binlog-stmt-cache-size          = 4M
+enforce-gtid-consistency        = ON
+gtid-mode                       = ON
+master-info-repository          = TABLE
+master-verify-checksum          = ON
+max-binlog-cache-size           = 2G
+max-binlog-size                 = 512M
+max-binlog-stmt-cache-size      = 2G
+relay-log                       = mysql-relay
+relay-log-info-repository       = TABLE
+slave-sql-verify-checksum       = ON
+super-read-only                 = <%= p('leader_follower.enabled') ? "ON" : "OFF" %>
+relay-log-recovery = ON
+
+!includedir /var/vcap/sys/run/pxc-mysql/lf-state
+
+<% if p('leader_follower.enabled') && p('leader_follower.replication_mode') == 'semi-sync' %>
+plugin-load-add                 = semisync_master.so
+plugin-load-add                 = semisync_slave.so
+rpl-semi-sync-slave-enabled     = on
+rpl-semi-sync-master-timeout    = <%= p('leader_follower.semi_sync_ack_timeout_in_ms') %>
+<% end %>
+
 
 # Required for user to create triggers when binlog is enabled
 log_bin_trust_function_creators = 1
 
 # Slow query logging:
-slow_query_log                  = 1
+slow_query_log                  = ON
 slow_query_log_file             = /var/vcap/sys/log/pxc-mysql/mysql_slow_query.log
 long_query_time                 = <%= p('long_query_time') %>
 <% if p('log_queries_not_using_indexes') %>
@@ -128,12 +159,9 @@ log_queries_not_using_indexes   = ON
 <% end %>
 
 # User statistics
-<% if p('userstat') %>
-userstat                        = 1
-<% end %>
+userstat                        = <%= bool_to_on_off(p('userstat')) %>
 
 innodb_file_per_table           = ON
-innodb_file_format              = Barracuda
 innodb_log_file_size            = <%= p('ib_log_file_size')%>MB
 innodb_support_xa               = OFF
 <% if p('innodb_large_prefix_enabled') %>
@@ -151,16 +179,8 @@ max_heap_table_size             = <%= p('max_heap_table_size') %>
 tmp_table_size                  = <%= p('tmp_table_size') %>
 
 # These are mandatory MySQL settings for Galera to work
-binlog_format                   = ROW
-default_storage_engine          = InnoDB
 innodb_autoinc_lock_mode        = 2
-innodb_doublewrite              = 1
-query_cache_size                = 0
 query_cache_type                = OFF
-
-# These are required to make the quota enforcer work
-innodb_stats_on_metadata        = ON
-innodb_stats_persistent         = OFF
 
 <%
   if not [0, 1, 2].include?(p('innodb_flush_log_at_trx_commit'))
@@ -187,9 +207,11 @@ innodb_log_buffer_size          = <%= p('innodb_log_buffer_size') %>
 max_connections                 = <%= p('max_connections') %>
 
 # Event Scheduler
-event_scheduler                 = <%= p('event_scheduler') %>
+event_scheduler                 = <%= bool_to_on_off(p('event_scheduler')) %>
+lower-case-table-names          = <%= p('enable_lower_case_table_names') ? 1 : 0 %>
+myisam-recover-options          = backup,force
 
-<% if p('server_audit_logs_enabled') %>
+<% if p('audit_log.enabled') %>
 plugin-load                     = audit_log=audit_log.so
 audit_log_file                  = /var/vcap/store/mysql_audit_logs/mysql_server_audit.log
 audit_log_format                = JSON
