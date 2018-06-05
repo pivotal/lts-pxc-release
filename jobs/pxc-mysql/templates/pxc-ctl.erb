@@ -44,6 +44,7 @@ case $1 in
   # monit unmonitor && monit monitor, at which point monit would find the pid and reset the status to 'running'
 
   start)
+    <% if p('enable_galera') %>
     # Ensure that if IPsec is present, it is running before we try to start
     set +e
     ipsec_path=$(ls /var/vcap/packages/strongswan*/sbin/ipsec | head -1)
@@ -77,6 +78,14 @@ case $1 in
     echo $! > $LAUNCHER_PID_FILE
 
     echo "start script: completed starting galera-init."
+    <% else %>
+    exec chpst -u vcap:vcap \
+      /var/vcap/packages/pxc/bin/mysqld \
+      --defaults-file=/var/vcap/jobs/mysql/config/my.cnf \
+      --init-file=/var/vcap/jobs/mysql/scripts/init.sql \
+      --daemonize \
+      ${@:2} #allow additional configuration on start for better operability
+    <% end %>
     ;;
 
   stop)
@@ -84,8 +93,9 @@ case $1 in
 
     echo "stop script: stopping node $JOB_INDEX"
     /var/vcap/packages/pxc/bin/mysqladmin --defaults-file=/var/vcap/jobs/pxc-mysql/config/mylogin.cnf shutdown
+    <% if p('enable_galera') %>
     rm $PIDFILE
-
+    <% end %>
     echo "stop script: completed stopping galera-init"
     ;;
 

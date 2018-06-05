@@ -25,6 +25,9 @@ if [ ! -f /usr/local/bin/mysql ]; then
   ln -sf /var/vcap/packages/pxc/bin/mysql /usr/local/bin
 fi
 
+<% if p('enable_galera') %>
+# Start in Galera Mode
+
 # add xtrabackup to path
 export PATH=$PATH:/var/vcap/packages/percona-xtrabackup/bin
 
@@ -52,6 +55,17 @@ $GALERA_INIT_PREFIX_CMD \
          >> $LOG_FILE 2>&1"
 status=$?
 set -e
-
 log "pre-start execution script: pre-start completed with error code ${status}"
+<% else %>
+# Start in non-Galera Mode
+chmod 0640 /var/vcap/jobs/mysql/scripts/init.sql
+chown vcap:vcap /var/vcap/jobs/mysql/scripts/init.sql
+exec chpst -u vcap:vcap \
+      /var/vcap/packages/pxc/bin/mysqld \
+      --defaults-file=/var/vcap/jobs/mysql/config/my.cnf \
+      --init-file=/var/vcap/jobs/mysql/scripts/init.sql \
+      --daemonize \
+      ${@:2} #allow additional configuration on start for better operability
+<% end %>
+
 log "pre-start execution script: completed pre-start execution"
