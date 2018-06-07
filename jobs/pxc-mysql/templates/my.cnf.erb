@@ -211,9 +211,16 @@ myisam-recover-options          = backup,force
 
 <% if p('audit_log.enabled') %>
 plugin-load                     = audit_log=audit_log.so
+<% if p('enable_galera') %>
 audit_log_file                  = /var/vcap/store/mysql_audit_logs/mysql_server_audit.log
 audit_log_format                = JSON
 audit_log_exclude_accounts      = "<%= excluded_audit_users.join(',') %>"
+<% else %>
+audit-log-file = /var/vcap/sys/log/mysql/mysql_audit_log
+audit-log-format = CSV
+audit-log-rotate-on-size = 50M
+audit-log-rotations = 5
+<% end %>
 <% end %>
 
 # SST tls

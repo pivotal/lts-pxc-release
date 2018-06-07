@@ -238,7 +238,6 @@ properties:
     default: false
 
   sync_binlog:
-    default: true
     description: 'Enable binlogs across all nodes'
 
   audit_log.enabled:

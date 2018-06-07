@@ -1,0 +1,52 @@
+name: pxc-single
+
+releases:
+- name: pxc
+  version: latest
+
+instance_groups:
+- name: mysql
+  azs:
+  - z1
+  instances: 1
+  jobs:
+  - name: pxc-mysql
+    release: pxc
+  networks:
+  - name: default
+  persistent_disk: 10000
+  properties:
+    admin_password: ((admin_password))
+    audit_log:
+      enabled: true
+    broker_admin_password: ((broker_admin_password))
+    default_schema: default_schema
+    enable_lower_case_table_names: false
+    max_allowed_packet: 256M
+    table_definition_cache: 8192
+    innodb_buffer_pool_size_percent: 50
+    innodb_log_file_size: 1G
+    expire_log_days: 3
+    sync_binlog: 1
+    innodb_flush_method: fsync
+    enable_galera: false
+    pxc_enabled: true
+  stemcell: default
+  vm_type: default
+
+stemcells:
+- alias: default
+  os: ubuntu-trusty
+  version: latest
+
+update:
+  canaries: 1
+  canary_watch_time: 10000-600000
+  max_in_flight: 1
+  update_watch_time: 10000-600000
+
+variables:
+- name: admin_password
+  type: password
+- name: broker_admin_password
+  type: password
