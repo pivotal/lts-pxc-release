@@ -1,1 +1,3 @@
+<% if p('enable_galera') %>
 GRANT USAGE ON mysql.* TO 'cluster-health-logger'@'127.0.0.1' IDENTIFIED BY '<%= p('cluster_health.password') %>'
+<% end %>

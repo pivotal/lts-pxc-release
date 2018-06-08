@@ -27,6 +27,7 @@ templates:
   server-ca.pem.erb: certificates/server-ca.pem
   server-cert.pem.erb: certificates/server-cert.pem
   server-key.pem.erb: certificates/server-key.pem
+  init.sql.erb: scripts/init.sql
 
 packages:
 - auto-tune-mysql
@@ -59,6 +60,13 @@ provides:
 
 properties:
 
+  default_schema:
+    default: hi
+  broker_admin_password:
+    default: apassword
+  default_char_set:
+    default: utf8
+    description: remove this property pls
   pxc_enabled:
     default: true
   pxc_strict_mode:
@@ -236,9 +244,6 @@ properties:
   leader_follower.enabled:
     description: Indicate that the VM is spun up with the intention of replication
     default: false
-
-  sync_binlog:
-    description: 'Enable binlogs across all nodes'
 
   audit_log.enabled:
     default: false

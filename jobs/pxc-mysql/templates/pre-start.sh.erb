@@ -42,7 +42,7 @@ chown vcap:vcap "${MYSQL_RUN_DIR}/lf-state"
 
 log "pre-start setup script: set up ENV and logging"
 
-<% if p('server_audit_logs_enabled') %>
+<% if p('audit_log.enabled') %>
 mkdir -p ${SERVER_AUDIT_LOG_DIR}
 chown vcap:vcap ${SERVER_AUDIT_LOG_DIR}
 

@@ -1,4 +1,5 @@
 ---
+<% if p('enable_galera') %>
 Port: <%= p('galera_agent.port') %>
 PidFile: '/var/vcap/sys/run/galera-agent/galera-agent.pid'
 MysqldPath: '/var/vcap/packages/pxc/bin/mysqld'
@@ -20,3 +21,4 @@ Monit:
 SidecarEndpoint:
   Username: <%= p('galera_agent.endpoint_username') %>
   Password: <%= p('galera_agent.endpoint_password') %>
+<% end %>

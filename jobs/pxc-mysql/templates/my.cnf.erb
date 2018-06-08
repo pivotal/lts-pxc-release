@@ -39,12 +39,6 @@
   if_p('advertise_host') do |advertise_host|
     node_host = advertise_host
   end
-
-  if_p('innodb_flush_method') do |innodb_flush_method|
-    if innodb_flush_method != 'O_DIRECT'
-        raise "Only innodb-flush-method=O_DIRECT or unset is supported!"
-    end
-  end
 %>
 
 [client]
@@ -87,11 +81,10 @@ wsrep_log_conflicts             = ON
 <% end %>
 
 # Regular MYSQL options:
-#character_set_server            = <%= p('character_set_server') %>
-#collation_server                = <%= p('collation_server') %>
+
 # Character Set
-character-set-server = <%= p('default_char_set') %>
-<% if_p('default_collation') do |value| %>
+character-set-server = <%= p('character_set_server') %>
+<% if_p('collation_server') do |value| %>
 collation-server = <%= value %>
 <% end %>
 user                            = vcap
@@ -137,9 +130,9 @@ max-binlog-stmt-cache-size      = 2G
 relay-log                       = mysql-relay
 relay-log-info-repository       = TABLE
 slave-sql-verify-checksum       = ON
-super-read-only                 = <%= p('leader_follower.enabled') ? "ON" : "OFF" %>
+super-read-only                 = <%= bool_to_on_off(p('leader_follower.enabled')) %>
 relay-log-recovery = ON
-sync-binlog = <%= p('sync_binlog') %>
+sync-binlog = 1
 
 !includedir /var/vcap/sys/run/pxc-mysql/lf-state
 <% end %>
@@ -171,11 +164,11 @@ query_cache_type                = OFF
 userstat                        = <%= bool_to_on_off(p('userstat')) %>
 
 innodb_file_per_table           = ON
-innodb_log_file_size            = <%= p('ib_log_file_size')%>MB
+innodb_log_file_size            = <%= p('innodb_log_file_size')%>MB
 
-innodb_large_prefix             = = <%= bool_to_on_off(p('innodb_large_prefix_enabled')) %>
+innodb_large_prefix             = <%= bool_to_on_off(p('innodb_large_prefix_enabled')) %>
 
-innodb_strict_mode             = = <%= bool_to_on_off(p('innodb_strict_mode')) %>
+innodb_strict_mode             = <%= bool_to_on_off(p('innodb_strict_mode')) %>
 
 # These are mandatory MySQL settings for Galera to work
 innodb_autoinc_lock_mode        = 2
@@ -216,7 +209,7 @@ audit_log_file                  = /var/vcap/store/mysql_audit_logs/mysql_server_
 audit_log_format                = JSON
 audit_log_exclude_accounts      = "<%= excluded_audit_users.join(',') %>"
 <% else %>
-audit-log-file = /var/vcap/sys/log/mysql/mysql_audit_log
+audit-log-file = /var/vcap/sys/log/pxc-mysql/mysql_audit_log
 audit-log-format = CSV
 audit-log-rotate-on-size = 50M
 audit-log-rotations = 5

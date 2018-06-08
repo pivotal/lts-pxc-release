@@ -45,46 +45,46 @@ case $1 in
 
   start)
     <% if p('enable_galera') %>
-    # Ensure that if IPsec is present, it is running before we try to start
-    set +e
-    ipsec_path=$(ls /var/vcap/packages/strongswan*/sbin/ipsec | head -1)
-    ipsec_monit_job=$(/var/vcap/bosh/bin/monit summary | grep ipsec)
-    if [ -n "${ipsec_monit_job}" ]; then
-      $ipsec_path status
-      ipsec_status=$?
+      # Ensure that if IPsec is present, it is running before we try to start
+      set +e
+      ipsec_path=$(ls /var/vcap/packages/strongswan*/sbin/ipsec | head -1)
+      ipsec_monit_job=$(/var/vcap/bosh/bin/monit summary | grep ipsec)
+      if [ -n "${ipsec_monit_job}" ]; then
+        $ipsec_path status
+        ipsec_status=$?
 
-      if [ ${ipsec_status} -ne 0 ]; then
-        echo "Exiting for restart because IPsec is present but not yet running"
-        exit 1
+        if [ ${ipsec_status} -ne 0 ]; then
+          echo "Exiting for restart because IPsec is present but not yet running"
+          exit 1
+        fi
       fi
-    fi
-    set -e
+      set -e
 
-    # WORKAROUND: monit may attempt to run this script multiple times if mysqld does not start in time.
-    # Ensure that running this script multiple times does not spawn multiple copies of _ctrl
-    LAUNCHER_NAME=galera-init-launcher
-    LAUNCHER_PID_FILE=$RUN_DIR/$LAUNCHER_NAME.pid
-    pid_guard $LAUNCHER_PID_FILE $LAUNCHER_NAME
+      # WORKAROUND: monit may attempt to run this script multiple times if mysqld does not start in time.
+      # Ensure that running this script multiple times does not spawn multiple copies of _ctrl
+      LAUNCHER_NAME=galera-init-launcher
+      LAUNCHER_PID_FILE=$RUN_DIR/$LAUNCHER_NAME.pid
+      pid_guard $LAUNCHER_PID_FILE $LAUNCHER_NAME
 
-    echo "Checking for existing instance of $PROC_NAME"
-    pid_guard $PIDFILE $PROC_NAME
+      echo "Checking for existing instance of $PROC_NAME"
+      pid_guard $PIDFILE $PROC_NAME
 
-    echo "start script: starting galera-init..."
-    su - vcap -c -o pipefail \
-    "PATH=$PATH PERL5LIB=$PERL5LIB $PXC_CTRL_PACKAGE/bin/galera-init \
-             -configPath=$CONFIG_FILE \
-             >> $LOG_FILE 2>&1" &
+      echo "start script: starting galera-init..."
+      su - vcap -c -o pipefail \
+      "PATH=$PATH PERL5LIB=$PERL5LIB $PXC_CTRL_PACKAGE/bin/galera-init \
+               -configPath=$CONFIG_FILE \
+               >> $LOG_FILE 2>&1" &
 
-    echo $! > $LAUNCHER_PID_FILE
+      echo $! > $LAUNCHER_PID_FILE
 
-    echo "start script: completed starting galera-init."
+      echo "start script: completed starting galera-init."
     <% else %>
-    exec chpst -u vcap:vcap \
-      /var/vcap/packages/pxc/bin/mysqld \
-      --defaults-file=/var/vcap/jobs/mysql/config/my.cnf \
-      --init-file=/var/vcap/jobs/mysql/scripts/init.sql \
-      --daemonize \
-      ${@:2} #allow additional configuration on start for better operability
+      exec chpst -u vcap:vcap \
+        /var/vcap/packages/pxc/bin/mysqld \
+        --defaults-file=/var/vcap/jobs/pxc-mysql/config/my.cnf \
+        --init-file=/var/vcap/jobs/pxc-mysql/scripts/init.sql \
+        --daemonize \
+        ${@:2} #allow additional configuration on start for better operability
     <% end %>
     ;;
 

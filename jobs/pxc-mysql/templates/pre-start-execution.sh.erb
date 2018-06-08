@@ -58,12 +58,12 @@ set -e
 log "pre-start execution script: pre-start completed with error code ${status}"
 <% else %>
 # Start in non-Galera Mode
-chmod 0640 /var/vcap/jobs/mysql/scripts/init.sql
-chown vcap:vcap /var/vcap/jobs/mysql/scripts/init.sql
+chmod 0640 /var/vcap/jobs/pxc-mysql/scripts/init.sql
+chown vcap:vcap /var/vcap/jobs/pxc-mysql/scripts/init.sql
 exec chpst -u vcap:vcap \
       /var/vcap/packages/pxc/bin/mysqld \
-      --defaults-file=/var/vcap/jobs/mysql/config/my.cnf \
-      --init-file=/var/vcap/jobs/mysql/scripts/init.sql \
+      --defaults-file=/var/vcap/jobs/pxc-mysql/config/my.cnf \
+      --init-file=/var/vcap/jobs/pxc-mysql/scripts/init.sql \
       --daemonize \
       ${@:2} #allow additional configuration on start for better operability
 <% end %>
