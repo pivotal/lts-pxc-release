@@ -10,6 +10,8 @@
     stemcell: default
     persistent_disk: 10000
     jobs:
+    - name: bpm
+      release: bpm
     - name: pxc-mysql
       release: pxc
       properties:

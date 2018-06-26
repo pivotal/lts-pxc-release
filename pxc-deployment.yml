@@ -3,6 +3,8 @@ name: pxc
 releases:
 - name: pxc
   version: latest
+- name: bpm
+  version: latest
 
 instance_groups:
 - name: mysql
