@@ -1,0 +1,14 @@
+#!/bin/bash -e
+set -e -x
+
+log_dir=/var/vcap/sys/log/tls-connection-tests
+
+mkdir -p $log_dir
+chown -R vcap:vcap $log_dir
+
+# Allowed number of open file descriptors
+ulimit -n 100000
+
+/var/vcap/packages/tls-connection-tests/bin/tls-connection-tests \
+    1> >(tee -a $log_dir/tls-connection-tests.stdout.log) \
+    2> >(tee -a $log_dir/tls-connection-tests.stderr.log)

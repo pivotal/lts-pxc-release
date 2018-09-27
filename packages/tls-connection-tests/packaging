@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -eu
+
+source /var/vcap/packages/golang-1.9-linux/bosh/compile.env
+mkdir -p ${BOSH_INSTALL_TARGET}/bin
+mkdir -p ${GOPATH}/src
+
+mv tls-connection-tests ${GOPATH}/src
+
+go build -o ${BOSH_INSTALL_TARGET}/bin/tls-connection-tests tls-connection-tests

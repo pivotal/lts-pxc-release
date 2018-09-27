@@ -1,0 +1,8 @@
+---
+name: tls-connection-tests
+dependencies:
+  - golang-1.9-linux
+files:
+  - tls-connection-tests/**/*.go
+excluded_files:
+  - "**/*_test.go"

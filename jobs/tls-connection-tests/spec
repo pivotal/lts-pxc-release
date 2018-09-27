@@ -1,0 +1,10 @@
+---
+name: tls-connection-tests
+packages:
+  - golang-1.9-linux
+  - tls-connection-tests
+
+templates:
+  run.erb: bin/run
+
+properties: {}
