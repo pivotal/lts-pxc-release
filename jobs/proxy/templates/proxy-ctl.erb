@@ -26,7 +26,7 @@ case $1 in
 
     cd $package_dir
 
-    su - vcap -c -o pipefail "$package_dir/bin/proxy \
+    chpst -u vcap:vcap bash -c  "$package_dir/bin/proxy \
       -configPath=$job_dir/config/proxy.yml \
       --logLevel="info" \
       >> $log_dir/proxy.combined.log 2>&1"
