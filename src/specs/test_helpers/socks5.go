@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/url"
 
-	"github.com/cloudfoundry/socks5-proxy"
+	"code.cloudfoundry.org/socks5-proxy"
 	"github.com/pkg/errors"
 )
 
