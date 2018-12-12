@@ -3,9 +3,10 @@ package test_helpers
 import (
 	"database/sql"
 	"fmt"
+	"os"
+
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/gomega"
-	"os"
 )
 
 func DbSetup(tableName string) string {

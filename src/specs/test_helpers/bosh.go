@@ -2,12 +2,11 @@ package test_helpers
 
 import (
 	"fmt"
+	"os"
+
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshuaa "github.com/cloudfoundry/bosh-cli/uaa"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
-	. "github.com/onsi/gomega"
-	"io/ioutil"
-	"os"
 )
 
 func BuildBoshDirector() (boshdir.Director, error) {
@@ -54,21 +53,7 @@ func BoshClientSecret() string {
 }
 
 func BoshCaCert() string {
-	path := os.Getenv("BOSH_CA_CERT_PATH")
-	key, err := ioutil.ReadFile(path)
-	Expect(err).NotTo(HaveOccurred())
-	return string(key)
-}
-
-func BoshGwUser() string {
-	return os.Getenv("BOSH_GW_USER")
-}
-
-func BoshGwPrivateKey() []byte {
-	path := os.Getenv("BOSH_GW_PRIVATE_KEY_PATH")
-	key, err := ioutil.ReadFile(path)
-	Expect(err).NotTo(HaveOccurred())
-	return key
+	return os.Getenv("BOSH_CA_CERT")
 }
 
 func buildUAA() (boshuaa.UAA, error) {
@@ -93,4 +78,20 @@ func buildUAA() (boshuaa.UAA, error) {
 	config.CACert = BoshCaCert()
 
 	return factory.New(config)
+}
+
+func HostsForInstanceGroup(deployment boshdir.Deployment, instanceGroupName string) ([]string, error) {
+	instances, err := deployment.Instances()
+	if err != nil {
+		return nil, err
+	}
+
+	var addresses []string
+	for _, instance := range instances {
+		if instance.Group == instanceGroupName {
+			addresses = append(addresses, instance.IPs[0])
+		}
+	}
+
+	return addresses, nil
 }
