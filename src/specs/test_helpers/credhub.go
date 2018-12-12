@@ -1,6 +1,7 @@
 package test_helpers
 
 import (
+	"fmt"
 	"os"
 
 	"code.cloudfoundry.org/credhub-cli/credhub"
@@ -22,8 +23,42 @@ func NewCredhubClient() (*credhub.CredHub, error) {
 	return chClient, err
 }
 
-func GetPassword(chClient *credhub.CredHub, key string) (string, error) {
-	pw, err := chClient.GetLatestPassword(key)
+func credhubKey(name string) string {
+	return fmt.Sprintf("%s/%s/%s", BoshCredhubPrefix, os.Getenv("BOSH_DEPLOYMENT"), name)
+}
+
+func GetMySQLAdminPassword() (string, error) {
+	client, err := NewCredhubClient()
+	if err != nil {
+		return "", err
+	}
+	pw, err := client.GetLatestPassword(credhubKey("cf_mysql_mysql_admin_password"))
+	if err != nil {
+		return "", err
+	}
+
+	return string(pw.Value), nil
+}
+
+func GetGaleraAgentPassword() (string, error) {
+	client, err := NewCredhubClient()
+	if err != nil {
+		return "", err
+	}
+	pw, err := client.GetLatestPassword(credhubKey("cf_mysql_mysql_galera_healthcheck_endpoint_password"))
+	if err != nil {
+		return "", err
+	}
+
+	return string(pw.Value), nil
+}
+
+func GetProxyPassword() (string, error) {
+	client, err := NewCredhubClient()
+	if err != nil {
+		return "", err
+	}
+	pw, err := client.GetLatestPassword(credhubKey("cf_mysql_proxy_api_password"))
 	if err != nil {
 		return "", err
 	}

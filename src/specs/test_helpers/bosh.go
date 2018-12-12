@@ -1,12 +1,19 @@
 package test_helpers
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
 	boshuaa "github.com/cloudfoundry/bosh-cli/uaa"
 	boshlog "github.com/cloudfoundry/bosh-utils/logger"
+	. "github.com/onsi/gomega"
+)
+
+var (
+	BoshDeployment    boshdir.Deployment
+	BoshCredhubPrefix string
 )
 
 func BuildBoshDirector() (boshdir.Director, error) {
@@ -36,7 +43,7 @@ func BuildBoshDirector() (boshdir.Director, error) {
 	return factory.New(config, boshdir.NewNoopTaskReporter(), boshdir.NewNoopFileReporter())
 }
 
-func BoshDeployment() string {
+func BoshDeploymentName() string {
 	return os.Getenv("BOSH_DEPLOYMENT")
 }
 
@@ -94,4 +101,34 @@ func HostsForInstanceGroup(deployment boshdir.Deployment, instanceGroupName stri
 	}
 
 	return addresses, nil
+}
+
+func SetupBoshDeployment() {
+	var err error
+	director, err := BuildBoshDirector()
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+
+	info, err := director.Info()
+	Expect(err).NotTo(HaveOccurred())
+	BoshCredhubPrefix = "/" + info.Name
+
+	BoshDeployment, err = director.FindDeployment(BoshDeploymentName())
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+}
+
+func MySQLHosts() ([]string, error) {
+	return HostsForInstanceGroup(BoshDeployment, "mysql")
+}
+
+func FirstProxyHost() (string, error) {
+	proxyHosts, err := HostsForInstanceGroup(BoshDeployment, "proxy")
+	if err != nil {
+		return "", err
+	}
+
+	if len(proxyHosts) == 0 {
+		return "", errors.New("no proxies found")
+	}
+
+	return proxyHosts[0], nil
 }
