@@ -28,17 +28,14 @@
   end
 %>
 
-[client]
-port                            = <%= p('port') %>
-socket                          = <%= "#{base_folder}/mysqld.sock" %>
-
+!include /var/vcap/jobs/pxc-mysql/config/mylogin.cnf
 !include                        /var/vcap/jobs/pxc-mysql/config/auto-tune.cnf
 
 [mysqld]
 server-id                       = <%= index %>
-ssl-ca=/var/vcap/jobs/pxc-mysql/certificates/server-ca.pem
-ssl-cert=/var/vcap/jobs/pxc-mysql/certificates/server-cert.pem
-ssl-key=/var/vcap/jobs/pxc-mysql/certificates/server-key.pem
+ssl-ca                          = /var/vcap/jobs/pxc-mysql/certificates/server-ca.pem
+ssl-cert                        = /var/vcap/jobs/pxc-mysql/certificates/server-cert.pem
+ssl-key                         = /var/vcap/jobs/pxc-mysql/certificates/server-key.pem
 
 <% if p('engine_config.galera.enabled') %>
 # GALERA options:
