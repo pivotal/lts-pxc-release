@@ -2,14 +2,10 @@ package bootstrap_test
 
 import (
 	"log"
-	"net"
-	"net/http"
 	"os"
 	"testing"
-	"time"
 
-	"github.com/cloudfoundry/socks5-proxy"
-	"github.com/go-sql-driver/mysql"
+	"github.com/cloudfoundry/bosh-cli/director"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -22,8 +18,10 @@ func TestBootstrap(t *testing.T) {
 }
 
 var (
-	dialer     proxy.DialFunc
-	httpClient *http.Client
+	boshDeployment      director.Deployment
+	galeraAgentUsername = "galera-agent"
+	mysqlUsername       = "root"
+	proxyUsername       = "proxy"
 )
 
 var _ = BeforeSuite(func() {
@@ -35,34 +33,16 @@ var _ = BeforeSuite(func() {
 		"BOSH_GW_PRIVATE_KEY",
 		"BOSH_GW_USER",
 		"BOSH_DEPLOYMENT",
-		"MYSQL_USERNAME",
-		"MYSQL_PASSWORD",
-		"GALERA_AGENT_USERNAME",
-		"GALERA_AGENT_PASSWORD",
-		"PROXY_USERNAME",
-		"PROXY_PASSWORD",
+		"CREDHUB_SERVER",
+		"CREDHUB_CLIENT",
+		"CREDHUB_SECRET",
 	}
 	helpers.CheckForRequiredEnvVars(requiredEnvs)
 
+	log.Println("Setting up bosh deployment")
+	helpers.SetupBoshDeployment()
+
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
-		var err error
-		dialer, err = helpers.NewSocks5Dialer(
-			os.Getenv("BOSH_ALL_PROXY"),
-			log.New(GinkgoWriter, "[socks5proxy] ", log.LstdFlags),
-		)
-		Expect(err).NotTo(HaveOccurred())
-
-		httpClient = &http.Client{
-			Transport: &http.Transport{
-				Dial: dialer,
-			},
-			Timeout: 5 * time.Second,
-		}
-
-		mysql.RegisterDial("tcp", func(addr string) (net.Conn, error) {
-			return dialer("tcp", addr)
-		})
-	} else {
-		httpClient = http.DefaultClient
+		helpers.SetupSocks5Proxy()
 	}
 })

@@ -18,7 +18,7 @@ func scaleDeployment(instanceCount int) error {
 		return fmt.Errorf("building director: %s", err)
 	}
 
-	deployment, err := director.FindDeployment(helpers.BoshDeployment())
+	deployment, err := director.FindDeployment(helpers.BoshDeploymentName())
 	if err != nil {
 		return fmt.Errorf("finding deployment: %s", err)
 	}
@@ -66,14 +66,14 @@ func verifyDataExists(expectedString string, databaseConnection *sql.DB) {
 
 var _ = Describe("CF PXC MySQL Scaling", func() {
 	BeforeEach(func() {
-		helpers.DbSetup("scaling_test_table")
+		helpers.DbSetup(helpers.DbConn(),"scaling_test_table")
 
 		err := scaleDeployment(3)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup()
+		helpers.DbCleanup(helpers.DbConn())
 	})
 
 	It("proxies failover to another node after a partition of mysql node", func() {

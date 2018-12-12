@@ -12,11 +12,11 @@ import (
 var _ = Describe("CF PXC MySQL Connection", func() {
 
 	BeforeEach(func() {
-		helpers.DbSetup("connection_test_table")
+		helpers.DbSetup(helpers.DbConn(),"connection_test_table")
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup()
+		helpers.DbCleanup(helpers.DbConn())
 	})
 
 	It("allows reading and writing data", func() {

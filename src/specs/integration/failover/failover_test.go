@@ -16,7 +16,7 @@ func deleteMysqlVM(host string) error {
 		return fmt.Errorf("building director: %s", err)
 	}
 
-	deployment, err := director.FindDeployment(helpers.BoshDeployment())
+	deployment, err := director.FindDeployment(helpers.BoshDeploymentName())
 	if err != nil {
 		return fmt.Errorf("finding deployment: %s", err)
 	}

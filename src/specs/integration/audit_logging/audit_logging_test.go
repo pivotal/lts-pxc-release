@@ -23,12 +23,12 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 	var databaseName, auditLogPath string
 
 	BeforeEach(func() {
-		databaseName = helpers.DbSetup("audit_logging_test_table")
+		databaseName = helpers.DbSetup(helpers.DbConn(),"audit_logging_test_table")
 		auditLogPath = os.Getenv("AUDIT_LOG_PATH")
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup()
+		helpers.DbCleanup(helpers.DbConn())
 		cleanupUsers("included_user")
 		cleanupUsers("excludeDBAudit1")
 		cleanupUsers("excludeDBAudit2")
@@ -47,7 +47,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 			})
 
 			It("does not log any of the excluded user's activity in the audit log", func() {
-				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword)
+				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword, helpers.DbHost())
 				auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)
 
 				Expect(string(auditLogContents)).ToNot(ContainSubstring("\"user\":\"excludeDBAudit1[excludeDBAudit1]"))
@@ -62,7 +62,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 			})
 
 			It("does not log any of the excluded user's activity in the audit log", func() {
-				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword)
+				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword, helpers.DbHost())
 				auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)
 
 				Expect(string(auditLogContents)).ToNot(ContainSubstring("\"user\":\"excludeDBAudit2[excludeDBAudit2]"))
@@ -83,7 +83,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 		})
 
 		It("does log all of the included user's activity in the audit log", func() {
-			dbConn := helpers.DbConnWithUser(includedUser, includedUserPassword)
+			dbConn := helpers.DbConnWithUser(includedUser, includedUserPassword, helpers.DbHost())
 			auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)
 
 			Expect(string(auditLogContents)).To(ContainSubstring("\"user\":\"included_user[included_user]"))

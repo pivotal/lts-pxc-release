@@ -14,7 +14,7 @@ func deployWithBufferPoolSizePercent(bufferPoolSizePercent int) {
 	director, err := helpers.BuildBoshDirector()
 	Expect(err).NotTo(HaveOccurred())
 
-	deployment, err := director.FindDeployment(helpers.BoshDeployment())
+	deployment, err := director.FindDeployment(helpers.BoshDeploymentName())
 	Expect(err).NotTo(HaveOccurred())
 
 	manifestString, err := deployment.Manifest()
@@ -55,7 +55,7 @@ var _ = Describe("CF PXC MySQL Autotune", func() {
 		director, err := helpers.BuildBoshDirector()
 		Expect(err).NotTo(HaveOccurred())
 
-		deployment, err := director.FindDeployment(helpers.BoshDeployment())
+		deployment, err := director.FindDeployment(helpers.BoshDeploymentName())
 		Expect(err).NotTo(HaveOccurred())
 
 		var mysqlVm boshdir.VMInfo

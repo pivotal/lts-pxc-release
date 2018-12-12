@@ -1,10 +1,10 @@
 package bootstrap_test
 
 import (
+	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"time"
 
 	boshdir "github.com/cloudfoundry/bosh-cli/director"
@@ -15,21 +15,21 @@ import (
 	helpers "specs/test_helpers"
 )
 
-var (
-	galeraAgentUsername = os.Getenv("GALERA_AGENT_USERNAME")
-	galeraAgentPassword = os.Getenv("GALERA_AGENT_Password")
-)
-
 func stopMySQL(host string) error {
-	stopMySQLEndpoint := fmt.Sprintf("https://%s:9200/stop_mysql", host)
+	stopMySQLEndpoint := fmt.Sprintf("http://%s:9200/stop_mysql", host)
 	req, err := http.NewRequest("POST", stopMySQLEndpoint, nil)
+	if err != nil {
+		return err
+	}
+
+	galeraAgentPassword, err := helpers.GetGaleraAgentPassword()
 	if err != nil {
 		return err
 	}
 
 	req.SetBasicAuth(galeraAgentUsername, galeraAgentPassword)
 
-	res, err := httpClient.Do(req)
+	res, err := helpers.HttpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -45,33 +45,26 @@ func stopMySQL(host string) error {
 }
 
 func stopGaleraInitOnAllMysqls() {
-	director, err := helpers.BuildBoshDirector()
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	mysqlHosts, err := helpers.MySQLHosts()
+	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
-	deployment, err := director.FindDeployment(helpers.BoshDeployment())
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
-	hosts, err := helpers.HostsForInstanceGroup(deployment, "mysql")
-	ExpectWithOffset(1, err).NotTo(HaveOccurred())
-
-	for _, host := range hosts {
+	for _, host := range mysqlHosts {
 		ExpectWithOffset(1, stopMySQL(host)).To(Succeed())
 	}
 
+	firstProxy, err := helpers.FirstProxyHost()
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	proxyPassword, err := helpers.GetProxyPassword()
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
+
 	EventuallyWithOffset(1, func() (string, error) {
-		return helpers.ActiveProxyBackend(httpClient)
+		return helpers.ActiveProxyBackend(proxyUsername, proxyPassword, firstProxy, helpers.HttpClient)
 	}, "3m", "1s").Should(BeEmpty())
 }
 
 func bootstrapCluster() {
-	director, err := helpers.BuildBoshDirector()
-	Expect(err).NotTo(HaveOccurred())
-
-	deployment, err := director.FindDeployment(helpers.BoshDeployment())
-	Expect(err).NotTo(HaveOccurred())
-
 	slugList := []boshdir.InstanceGroupOrInstanceSlug{boshdir.NewInstanceGroupOrInstanceSlug("mysql", "0")}
-	errandResult, err := deployment.RunErrand("bootstrap", false, false, slugList)
+	errandResult, err := boshDeployment.RunErrand("bootstrap", false, false, slugList)
 	Expect(err).NotTo(HaveOccurred())
 
 	fmt.Println(fmt.Sprintf("Errand STDOUT: %s", errandResult[0].Stdout))
@@ -79,19 +72,29 @@ func bootstrapCluster() {
 }
 
 var _ = Describe("CF PXC MySQL Bootstrap", func() {
+	var (
+		db *sql.DB
+	)
+
 	BeforeEach(func() {
-		helpers.DbSetup("bootstrap_test_table")
+		firstProxy, err := helpers.FirstProxyHost()
+		Expect(err).NotTo(HaveOccurred())
+
+		mysqlPassword, err := helpers.GetMySQLAdminPassword()
+		Expect(err).NotTo(HaveOccurred())
+
+		db = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
+
+		helpers.DbSetup(db, "bootstrap_test_table")
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup()
+		helpers.DbCleanup(db)
 	})
 
 	It("bootstraps a cluster", func() {
 		By("Write data")
-		dbConn := helpers.DbConn()
-
-		_, err := dbConn.Query("REPLACE INTO bootstrap_test_table VALUES('the only data')")
+		_, err := db.Query("INSERT INTO pxc_release_test_db.bootstrap_test_table VALUES('the only data')")
 		Expect(err).NotTo(HaveOccurred())
 
 		stopGaleraInitOnAllMysqls()
@@ -103,7 +106,7 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 
 		By("Verify cluster has three nodes")
 		var variableName, variableValue string
-		rows, err := dbConn.Query("SHOW status LIKE 'wsrep_cluster_size'")
+		rows, err := db.Query("SHOW status LIKE 'wsrep_cluster_size'")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(rows.Next()).To(BeTrue())
@@ -113,7 +116,7 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 
 		By("Verifying the data still exists")
 		var queryResultString string
-		rows, err = dbConn.Query("SELECT * FROM bootstrap_test_table")
+		rows, err = db.Query("SELECT * FROM pxc_release_test_db.bootstrap_test_table")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(rows.Next()).To(BeTrue())
