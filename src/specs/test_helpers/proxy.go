@@ -5,16 +5,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 
 	"github.com/pkg/errors"
 )
 
-func ActiveProxyBackend(client *http.Client) (string, error) {
-	var proxyUsername = os.Getenv("PROXY_USERNAME")
-	var proxyPassword = os.Getenv("PROXY_PASSWORD")
-
-	requestURL := fmt.Sprintf("http://%s:8080/v0/cluster", BoshEnvironment())
+func ActiveProxyBackend(proxyUsername, proxyPassword, proxyHost string, client *http.Client) (string, error) {
+	requestURL := fmt.Sprintf("http://%s:8080/v0/cluster", proxyHost)
 	req, err := http.NewRequest("GET", requestURL, nil)
 	if err != nil {
 		return "", err
