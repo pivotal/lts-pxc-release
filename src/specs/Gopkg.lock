@@ -10,6 +10,32 @@
   revision = "e9dc86bbf0e5bbe6bf7ff5a6f71e048959b61f71"
 
 [[projects]]
+  digest = "1:4b1d8ffd83a4a05d81b0b4422ad2a89a084386b5cf639800cd8ab5bf17ddd6c9"
+  name = "code.cloudfoundry.org/credhub-cli"
+  packages = [
+    "credhub",
+    "credhub/auth",
+    "credhub/auth/uaa",
+    "credhub/credentials",
+    "credhub/credentials/generate",
+    "credhub/credentials/values",
+    "credhub/permissions",
+    "credhub/server",
+    "errors",
+  ]
+  pruneopts = ""
+  revision = "bfbb05b8c9539c80929b2d14a453c33b7f6f466b"
+  version = "2.2.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ad0ef7941d901d624f0db1f5ea0333ce4884280696a3b24bc3ca3d4856e412b4"
+  name = "code.cloudfoundry.org/socks5-proxy"
+  packages = ["."]
+  pruneopts = ""
+  revision = "3659db090cb23a57807b53e2f8580b2427dc2659"
+
+[[projects]]
   digest = "1:8c27f2c4ff0e25af380552e3a51dab287e24c7fe8e62cb8b6dc7fbe3f343bd5b"
   name = "github.com/bmatcuk/doublestar"
   packages = ["."]
@@ -109,6 +135,14 @@
   pruneopts = ""
   revision = "a0583e0143b1624142adab07e0e97fe106d99561"
   version = "v1.3"
+
+[[projects]]
+  digest = "1:8c7fb7f81c06add10a17362abc1ae569ff9765a26c061c6b6e67c909f4f414db"
+  name = "github.com/hashicorp/go-version"
+  packages = ["."]
+  pruneopts = ""
+  revision = "b5a281d3160aa11950a6182bd9a9dc2cb1e02d50"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:9ea83adf8e96d6304f394d40436f2eb44c1dc3250d223b74088cc253a6cd0a1c"
@@ -290,6 +324,9 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "code.cloudfoundry.org/credhub-cli/credhub",
+    "code.cloudfoundry.org/credhub-cli/credhub/auth",
+    "code.cloudfoundry.org/socks5-proxy",
     "github.com/cloudfoundry/bosh-cli/director",
     "github.com/cloudfoundry/bosh-cli/uaa",
     "github.com/cloudfoundry/bosh-utils/logger",
