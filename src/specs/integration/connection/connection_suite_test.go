@@ -1,6 +1,7 @@
 package connection_test
 
 import (
+	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -15,10 +16,9 @@ func TestConnection(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	requiredEnvs := []string{
-		"MYSQL_HOST",
-		"MYSQL_USERNAME",
-		"MYSQL_PASSWORD",
+	helpers.SetupBoshDeployment()
+
+	if os.Getenv("BOSH_ALL_PROXY") != "" {
+		helpers.SetupSocks5Proxy()
 	}
-	helpers.CheckForRequiredEnvVars(requiredEnvs)
 })

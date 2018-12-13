@@ -19,12 +19,12 @@ var _ = Describe("CF PXC MySQL Connection", func() {
 
 	It("allows reading and writing data", func() {
 		dbConn := helpers.DbConn()
-		query := "INSERT INTO connection_test_table VALUES('connecting!')"
+		query := "INSERT INTO pxc_release_test_db.connection_test_table VALUES('connecting!')"
 		_, err := dbConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		var queryResultString string
-		query = "SELECT * FROM connection_test_table"
+		query = "SELECT * FROM pxc_release_test_db.connection_test_table"
 		rows, err := dbConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
