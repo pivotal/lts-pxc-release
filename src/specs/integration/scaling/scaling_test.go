@@ -2,14 +2,16 @@ package scaling_test
 
 import (
 	"fmt"
+
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"database/sql"
-	boshdir "github.com/cloudfoundry/bosh-cli/director"
-	"gopkg.in/yaml.v2"
 	helpers "specs/test_helpers"
+
+	boshdir "github.com/cloudfoundry/bosh-cli/director"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func scaleDeployment(instanceCount int) error {
@@ -56,7 +58,7 @@ func scaleDeployment(instanceCount int) error {
 
 func verifyDataExists(expectedString string, databaseConnection *sql.DB) {
 	var queryResultString string
-	query := fmt.Sprintf("SELECT * FROM scaling_test_table WHERE test_data='%s'", expectedString)
+	query := fmt.Sprintf("SELECT * FROM pxc_release_test_db.scaling_test_table WHERE test_data='%s'", expectedString)
 	rows, err := databaseConnection.Query(query)
 	Expect(err).NotTo(HaveOccurred())
 	rows.Next()
@@ -79,7 +81,7 @@ var _ = Describe("CF PXC MySQL Scaling", func() {
 	It("proxies failover to another node after a partition of mysql node", func() {
 		databaseConnection := helpers.DbConn()
 
-		query := "INSERT INTO scaling_test_table VALUES('data written with 3 nodes')"
+		query := "INSERT INTO pxc_release_test_db.scaling_test_table VALUES('data written with 3 nodes')"
 		_, err := databaseConnection.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
@@ -88,7 +90,7 @@ var _ = Describe("CF PXC MySQL Scaling", func() {
 
 		verifyDataExists("data written with 3 nodes", databaseConnection)
 
-		query = "INSERT INTO scaling_test_table VALUES('data written with 1 node')"
+		query = "INSERT INTO pxc_release_test_db.scaling_test_table VALUES('data written with 1 node')"
 		_, err = databaseConnection.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 

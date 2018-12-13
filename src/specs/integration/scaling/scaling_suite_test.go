@@ -1,10 +1,12 @@
 package scaling_test
 
 import (
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
+	"os"
 	helpers "specs/test_helpers"
 	"testing"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
 func TestScaling(t *testing.T) {
@@ -19,8 +21,13 @@ var _ = BeforeSuite(func() {
 		"BOSH_CLIENT",
 		"BOSH_CLIENT_SECRET",
 		"BOSH_DEPLOYMENT",
-		"MYSQL_USERNAME",
-		"MYSQL_PASSWORD",
 	}
 	helpers.CheckForRequiredEnvVars(requiredEnvs)
+
+	helpers.SetupBoshDeployment()
+
+	if os.Getenv("BOSH_ALL_PROXY") != "" {
+		helpers.SetupSocks5Proxy()
+	}
+
 })
