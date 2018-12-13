@@ -3,7 +3,6 @@ package test_helpers
 import (
 	"database/sql"
 	"fmt"
-	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	. "github.com/onsi/gomega"
@@ -25,14 +24,17 @@ func DbSetup(db *sql.DB, tableName string) string {
 }
 
 func DbConnNoDb() *sql.DB {
-	var mysqlUsername = os.Getenv("MYSQL_USERNAME")
-	var mysqlPassword = os.Getenv("MYSQL_PASSWORD")
+	mysqlUsername := "root"
+	mysqlPassword, err := GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := FirstProxyHost()
+	Expect(err).NotTo(HaveOccurred())
 
 	pxcConnectionString := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/",
 		mysqlUsername,
 		mysqlPassword,
-		DbHost(),
+		firstProxy,
 		3306)
 
 	databaseConnection, err := sql.Open("mysql", pxcConnectionString)
@@ -42,10 +44,13 @@ func DbConnNoDb() *sql.DB {
 }
 
 func DbConn() *sql.DB {
-	var mysqlUsername = os.Getenv("MYSQL_USERNAME")
-	var mysqlPassword = os.Getenv("MYSQL_PASSWORD")
+	mysqlUsername := "root"
+	mysqlPassword, err := GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := FirstProxyHost()
+	Expect(err).NotTo(HaveOccurred())
 
-	return DbConnWithUser(mysqlUsername, mysqlPassword, DbHost())
+	return DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
 }
 
 func DbConnWithUser(mysqlUsername, mysqlPassword, mysqlHost string) *sql.DB {
@@ -66,12 +71,4 @@ func DbCleanup(db *sql.DB) {
 	statement := "DROP DATABASE pxc_release_test_db"
 	_, err := db.Exec(statement)
 	Expect(err).NotTo(HaveOccurred())
-}
-
-func DbHost() string {
-	dbHost, hostExists := os.LookupEnv("MYSQL_HOST")
-	if hostExists {
-		return dbHost
-	}
-	return os.Getenv("BOSH_ENVIRONMENT")
 }
