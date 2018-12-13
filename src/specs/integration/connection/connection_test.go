@@ -7,12 +7,10 @@ import (
 	helpers "specs/test_helpers"
 )
 
-
-
 var _ = Describe("CF PXC MySQL Connection", func() {
 
 	BeforeEach(func() {
-		helpers.DbSetup(helpers.DbConn(),"connection_test_table")
+		helpers.DbSetup(helpers.DbConn(), "connection_test_table")
 	})
 
 	AfterEach(func() {
@@ -24,7 +22,6 @@ var _ = Describe("CF PXC MySQL Connection", func() {
 		query := "INSERT INTO connection_test_table VALUES('connecting!')"
 		_, err := dbConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
-
 
 		var queryResultString string
 		query = "SELECT * FROM connection_test_table"

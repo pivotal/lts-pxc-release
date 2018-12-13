@@ -64,7 +64,7 @@ func stopGaleraInitOnAllMysqls() {
 
 func bootstrapCluster() {
 	slugList := []boshdir.InstanceGroupOrInstanceSlug{boshdir.NewInstanceGroupOrInstanceSlug("mysql", "0")}
-	errandResult, err := boshDeployment.RunErrand("bootstrap", false, false, slugList)
+	errandResult, err := helpers.BoshDeployment.RunErrand("bootstrap", false, false, slugList)
 	Expect(err).NotTo(HaveOccurred())
 
 	fmt.Println(fmt.Sprintf("Errand STDOUT: %s", errandResult[0].Stdout))
@@ -94,9 +94,11 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 
 	It("bootstraps a cluster", func() {
 		By("Write data")
-		_, err := db.Query("INSERT INTO pxc_release_test_db.bootstrap_test_table VALUES('the only data')")
+		// TODO: Change back to INSERT
+		_, err := db.Query("REPLACE INTO pxc_release_test_db.bootstrap_test_table VALUES('the only data')")
 		Expect(err).NotTo(HaveOccurred())
 
+		By("Stop all instances of mysql")
 		stopGaleraInitOnAllMysqls()
 
 		By("Wait for monit to finish stopping")
@@ -123,5 +125,4 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 		Expect(rows.Scan(&queryResultString)).To(Succeed())
 		Expect(queryResultString).To(Equal("the only data"))
 	})
-
 })

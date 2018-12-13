@@ -18,7 +18,6 @@ var _ = Describe("Tls", func() {
 		dbConn = helpers.DbConnNoDb()
 	})
 
-
 	It("tests all the connections are TLS", func() {
 
 		query := `SELECT sbt.variable_value AS tls_version,  t2.variable_value AS cipher,
@@ -32,9 +31,9 @@ var _ = Describe("Tls", func() {
 
 		var (
 			tls_version string
-			cipher string
-			user string
-			host string
+			cipher      string
+			user        string
+			host        string
 		)
 
 		defer rows.Close()
@@ -44,7 +43,7 @@ var _ = Describe("Tls", func() {
 			Expect(user).NotTo(BeNil())
 			Expect(host).NotTo(BeNil())
 
-			if host != "localhost" || host != "127.0.0.1" {
+			if !(host == "localhost" || host == "127.0.0.1") {
 				Expect(tls_version).To(MatchRegexp("TLSv1\\.[1,2,3]"))
 				Expect(cipher).To(MatchRegexp("ECDHE-RSA.+"))
 			}

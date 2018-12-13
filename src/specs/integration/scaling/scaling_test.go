@@ -66,7 +66,7 @@ func verifyDataExists(expectedString string, databaseConnection *sql.DB) {
 
 var _ = Describe("CF PXC MySQL Scaling", func() {
 	BeforeEach(func() {
-		helpers.DbSetup(helpers.DbConn(),"scaling_test_table")
+		helpers.DbSetup(helpers.DbConn(), "scaling_test_table")
 
 		err := scaleDeployment(3)
 		Expect(err).NotTo(HaveOccurred())

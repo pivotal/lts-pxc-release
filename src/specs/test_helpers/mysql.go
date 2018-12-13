@@ -3,7 +3,6 @@ package test_helpers
 import (
 	"database/sql"
 	"fmt"
-	"log"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -57,7 +56,6 @@ func DbConnWithUser(mysqlUsername, mysqlPassword, mysqlHost string) *sql.DB {
 		mysqlHost,
 		3306)
 
-	log.Printf("Connecting via %v", pxcConnectionString)
 	databaseConnection, err := sql.Open("mysql", pxcConnectionString)
 	Expect(err).NotTo(HaveOccurred())
 

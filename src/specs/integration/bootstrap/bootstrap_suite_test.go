@@ -1,11 +1,9 @@
 package bootstrap_test
 
 import (
-	"log"
 	"os"
 	"testing"
 
-	"github.com/cloudfoundry/bosh-cli/director"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
@@ -18,7 +16,6 @@ func TestBootstrap(t *testing.T) {
 }
 
 var (
-	boshDeployment      director.Deployment
 	galeraAgentUsername = "galera-agent"
 	mysqlUsername       = "root"
 	proxyUsername       = "proxy"
@@ -39,7 +36,6 @@ var _ = BeforeSuite(func() {
 	}
 	helpers.CheckForRequiredEnvVars(requiredEnvs)
 
-	log.Println("Setting up bosh deployment")
 	helpers.SetupBoshDeployment()
 
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
