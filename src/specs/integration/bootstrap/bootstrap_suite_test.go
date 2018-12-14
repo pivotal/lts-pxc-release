@@ -1,6 +1,7 @@
 package bootstrap_test
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -17,8 +18,8 @@ func TestBootstrap(t *testing.T) {
 
 var (
 	galeraAgentUsername = "galera-agent"
-	mysqlUsername       = "root"
 	proxyUsername       = "proxy"
+	mysqlConn *sql.DB
 )
 
 var _ = BeforeSuite(func() {
@@ -33,6 +34,7 @@ var _ = BeforeSuite(func() {
 		"CREDHUB_SERVER",
 		"CREDHUB_CLIENT",
 		"CREDHUB_SECRET",
+		"CREDHUB_CA_CERT",
 	}
 	helpers.CheckForRequiredEnvVars(requiredEnvs)
 
@@ -41,4 +43,10 @@ var _ = BeforeSuite(func() {
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
 		helpers.SetupSocks5Proxy()
 	}
+	mysqlUsername := "root"
+	mysqlPassword, err := helpers.GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
+	Expect(err).NotTo(HaveOccurred())
+	mysqlConn = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
 })

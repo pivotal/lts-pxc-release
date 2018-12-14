@@ -116,12 +116,12 @@ func SetupBoshDeployment() {
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 }
 
-func MySQLHosts() ([]string, error) {
-	return HostsForInstanceGroup(BoshDeployment, "mysql")
+func MySQLHosts(boshDeployment boshdir.Deployment) ([]string, error) {
+	return HostsForInstanceGroup(boshDeployment, "mysql")
 }
 
-func FirstProxyHost() (string, error) {
-	proxyHosts, err := HostsForInstanceGroup(BoshDeployment, "proxy")
+func FirstProxyHost(boshDeployment boshdir.Deployment) (string, error) {
+	proxyHosts, err := HostsForInstanceGroup(boshDeployment, "proxy")
 	if err != nil {
 		return "", err
 	}

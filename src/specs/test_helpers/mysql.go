@@ -23,16 +23,6 @@ func DbSetup(db *sql.DB, tableName string) string {
 	return dbName
 }
 
-func DbConn() *sql.DB {
-	mysqlUsername := "root"
-	mysqlPassword, err := GetMySQLAdminPassword()
-	Expect(err).NotTo(HaveOccurred())
-	firstProxy, err := FirstProxyHost()
-	Expect(err).NotTo(HaveOccurred())
-
-	return DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
-}
-
 func DbConnWithUser(mysqlUsername, mysqlPassword, mysqlHost string) *sql.DB {
 	pxcConnectionString := fmt.Sprintf(
 		"%s:%s@tcp(%s:%d)/?tls=skip-verify",

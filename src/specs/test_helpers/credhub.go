@@ -16,6 +16,9 @@ func NewCredhubClient() (*credhub.CredHub, error) {
 
 	chClient, err := credhub.New(
 		os.Getenv("CREDHUB_SERVER"),
+		credhub.CaCerts(
+			os.Getenv("CREDHUB_CA_CERT"),
+		),
 		credhub.SkipTLSValidation(true),
 		credhub.Auth(uaaCreds),
 	)

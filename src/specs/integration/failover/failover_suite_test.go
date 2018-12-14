@@ -1,6 +1,7 @@
 package failover_test
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -14,6 +15,10 @@ func TestFailover(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "PXC Acceptance Tests -- Failover")
 }
+
+var (
+	mysqlConn *sql.DB
+)
 
 var _ = BeforeSuite(func() {
 	requiredEnvs := []string{
@@ -29,4 +34,11 @@ var _ = BeforeSuite(func() {
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
 		helpers.SetupSocks5Proxy()
 	}
+
+	mysqlUsername := "root"
+	mysqlPassword, err := helpers.GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
+	Expect(err).NotTo(HaveOccurred())
+	mysqlConn = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
 })

@@ -1,6 +1,7 @@
 package tls_test
 
 import (
+	"database/sql"
 	"os"
 	"testing"
 
@@ -15,10 +16,21 @@ func TestTls(t *testing.T) {
 	RunSpecs(t, "Tls Suite")
 }
 
+var (
+	mysqlConn *sql.DB
+)
+
 var _ = BeforeSuite(func() {
 	helpers.SetupBoshDeployment()
 
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
 		helpers.SetupSocks5Proxy()
 	}
+
+	mysqlUsername := "root"
+	mysqlPassword, err := helpers.GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
+	Expect(err).NotTo(HaveOccurred())
+	mysqlConn = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
 })

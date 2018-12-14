@@ -27,7 +27,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 	)
 
 	BeforeEach(func() {
-		firstProxy, err := helpers.FirstProxyHost()
+		firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
 		Expect(err).NotTo(HaveOccurred())
 
 		mysqlPassword, err := helpers.GetMySQLAdminPassword()
@@ -58,7 +58,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 			})
 
 			It("does not log any of the excluded user's activity in the audit log", func() {
-				firstProxy, err := helpers.FirstProxyHost()
+				firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
 				Expect(err).NotTo(HaveOccurred())
 				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword, firstProxy)
 				auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)
@@ -75,7 +75,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 			})
 
 			It("does not log any of the excluded user's activity in the audit log", func() {
-				firstProxy, err := helpers.FirstProxyHost()
+				firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
 				Expect(err).NotTo(HaveOccurred())
 				dbConn := helpers.DbConnWithUser(excludedUser, excludedUserPassword, firstProxy)
 				auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)
@@ -98,7 +98,7 @@ var _ = Describe("CF PXC MySQL Audit Logging", func() {
 		})
 
 		It("does log all of the included user's activity in the audit log", func() {
-			firstProxy, err := helpers.FirstProxyHost()
+			firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
 			Expect(err).NotTo(HaveOccurred())
 			dbConn := helpers.DbConnWithUser(includedUser, includedUserPassword, firstProxy)
 			auditLogContents := readAndWriteDataAndGetAuditLogContents(dbConn, auditLogPath)

@@ -1,6 +1,7 @@
 package scaling_test
 
 import (
+	"database/sql"
 	"os"
 	helpers "specs/test_helpers"
 	"testing"
@@ -13,6 +14,10 @@ func TestScaling(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "PXC Acceptance Tests -- Scaling")
 }
+
+var (
+	mysqlConn *sql.DB
+)
 
 var _ = BeforeSuite(func() {
 	requiredEnvs := []string{
@@ -30,4 +35,10 @@ var _ = BeforeSuite(func() {
 		helpers.SetupSocks5Proxy()
 	}
 
+	mysqlUsername := "root"
+	mysqlPassword, err := helpers.GetMySQLAdminPassword()
+	Expect(err).NotTo(HaveOccurred())
+	firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
+	Expect(err).NotTo(HaveOccurred())
+	mysqlConn = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
 })

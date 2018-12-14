@@ -2,6 +2,9 @@ package autotune_test
 
 import (
 	"math"
+
+	"gopkg.in/yaml.v2"
+
 	helpers "specs/test_helpers"
 	"strconv"
 
@@ -74,10 +77,9 @@ var _ = Describe("CF PXC MySQL Autotune", func() {
 
 		vmTotalMemoryInMB := float64(vmUsedMemInKb / vmUsedMemPercent * 100 / 1024)
 		var variableName, variableValue string
-		dbConn := helpers.DbConn()
 
 		query := "SHOW variables LIKE 'innodb_buffer_pool_size'"
-		rows, err := dbConn.Query(query)
+		rows, err := mysqlConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		rows.Next()

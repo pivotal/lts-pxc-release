@@ -68,36 +68,34 @@ func verifyDataExists(expectedString string, databaseConnection *sql.DB) {
 
 var _ = Describe("CF PXC MySQL Scaling", func() {
 	BeforeEach(func() {
-		helpers.DbSetup(helpers.DbConn(), "scaling_test_table")
+		helpers.DbSetup(mysqlConn, "scaling_test_table")
 
 		err := scaleDeployment(3)
 		Expect(err).NotTo(HaveOccurred())
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup(helpers.DbConn())
+		helpers.DbCleanup(mysqlConn)
 	})
 
 	It("proxies failover to another node after a partition of mysql node", func() {
-		databaseConnection := helpers.DbConn()
-
 		query := "INSERT INTO pxc_release_test_db.scaling_test_table VALUES('data written with 3 nodes')"
-		_, err := databaseConnection.Query(query)
+		_, err := mysqlConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = scaleDeployment(1)
 		Expect(err).NotTo(HaveOccurred())
 
-		verifyDataExists("data written with 3 nodes", databaseConnection)
+		verifyDataExists("data written with 3 nodes", mysqlConn)
 
 		query = "INSERT INTO pxc_release_test_db.scaling_test_table VALUES('data written with 1 node')"
-		_, err = databaseConnection.Query(query)
+		_, err = mysqlConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		err = scaleDeployment(3)
 		Expect(err).NotTo(HaveOccurred())
 
-		verifyDataExists("data written with 1 node", databaseConnection)
+		verifyDataExists("data written with 1 node", mysqlConn)
 	})
 
 })

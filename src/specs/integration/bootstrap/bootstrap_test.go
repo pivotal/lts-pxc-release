@@ -1,7 +1,6 @@
 package bootstrap_test
 
 import (
-	"database/sql"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -45,14 +44,14 @@ func stopMySQL(host string) error {
 }
 
 func stopGaleraInitOnAllMysqls() {
-	mysqlHosts, err := helpers.MySQLHosts()
+	mysqlHosts, err := helpers.MySQLHosts(helpers.BoshDeployment)
 	ExpectWithOffset(1, err).ToNot(HaveOccurred())
 
 	for _, host := range mysqlHosts {
 		ExpectWithOffset(1, stopMySQL(host)).To(Succeed())
 	}
 
-	firstProxy, err := helpers.FirstProxyHost()
+	firstProxy, err := helpers.FirstProxyHost(helpers.BoshDeployment)
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 	proxyPassword, err := helpers.GetProxyPassword()
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
@@ -72,30 +71,17 @@ func bootstrapCluster() {
 }
 
 var _ = Describe("CF PXC MySQL Bootstrap", func() {
-	var (
-		db *sql.DB
-	)
-
 	BeforeEach(func() {
-		firstProxy, err := helpers.FirstProxyHost()
-		Expect(err).NotTo(HaveOccurred())
-
-		mysqlPassword, err := helpers.GetMySQLAdminPassword()
-		Expect(err).NotTo(HaveOccurred())
-
-		db = helpers.DbConnWithUser(mysqlUsername, mysqlPassword, firstProxy)
-
-		helpers.DbSetup(db, "bootstrap_test_table")
+		helpers.DbSetup(mysqlConn, "bootstrap_test_table")
 	})
 
 	AfterEach(func() {
-		helpers.DbCleanup(db)
+		helpers.DbCleanup(mysqlConn)
 	})
 
 	It("bootstraps a cluster", func() {
 		By("Write data")
-		// TODO: Change back to INSERT
-		_, err := db.Query("REPLACE INTO pxc_release_test_db.bootstrap_test_table VALUES('the only data')")
+		_, err := mysqlConn.Query("INSERT INTO pxc_release_test_db.bootstrap_test_table VALUES('the only data')")
 		Expect(err).NotTo(HaveOccurred())
 
 		By("Stop all instances of mysql")
@@ -108,7 +94,7 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 
 		By("Verify cluster has three nodes")
 		var variableName, variableValue string
-		rows, err := db.Query("SHOW status LIKE 'wsrep_cluster_size'")
+		rows, err := mysqlConn.Query("SHOW status LIKE 'wsrep_cluster_size'")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(rows.Next()).To(BeTrue())
@@ -118,7 +104,7 @@ var _ = Describe("CF PXC MySQL Bootstrap", func() {
 
 		By("Verifying the data still exists")
 		var queryResultString string
-		rows, err = db.Query("SELECT * FROM pxc_release_test_db.bootstrap_test_table")
+		rows, err = mysqlConn.Query("SELECT * FROM pxc_release_test_db.bootstrap_test_table")
 		Expect(err).NotTo(HaveOccurred())
 
 		Expect(rows.Next()).To(BeTrue())

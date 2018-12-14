@@ -59,7 +59,7 @@ var _ = Describe("CF PXC MySQL Failover", func() {
 	)
 
 	BeforeEach(func() {
-		firstProxy, err = helpers.FirstProxyHost()
+		firstProxy, err = helpers.FirstProxyHost(helpers.BoshDeployment)
 		Expect(err).NotTo(HaveOccurred())
 
 		proxyPassword, err = helpers.GetProxyPassword()
@@ -78,9 +78,8 @@ var _ = Describe("CF PXC MySQL Failover", func() {
 
 	It("proxies failover to another node after a partition of mysql node", func() {
 		var oldBackend string
-		dbConn := helpers.DbConn()
 		query := "INSERT INTO pxc_release_test_db.failover_test_table VALUES('the only data')"
-		_, err := dbConn.Query(query)
+		_, err := mysqlConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		By("querying the proxy for the current mysql backend", func() {
@@ -105,7 +104,7 @@ var _ = Describe("CF PXC MySQL Failover", func() {
 
 		var queryResultString string
 		query = "SELECT * FROM pxc_release_test_db.failover_test_table"
-		rows, err := dbConn.Query(query)
+		rows, err := mysqlConn.Query(query)
 		Expect(err).NotTo(HaveOccurred())
 
 		rows.Next()
