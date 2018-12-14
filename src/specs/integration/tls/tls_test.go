@@ -7,7 +7,6 @@ import (
 	helpers "specs/test_helpers"
 
 	"database/sql"
-	"fmt"
 )
 
 var _ = Describe("Tls", func() {
@@ -15,7 +14,7 @@ var _ = Describe("Tls", func() {
 	var dbConn *sql.DB
 
 	BeforeEach(func() {
-		dbConn = helpers.DbConnNoDb()
+		dbConn = helpers.DbConn()
 	})
 
 	It("tests all the connections are TLS", func() {
@@ -48,7 +47,6 @@ var _ = Describe("Tls", func() {
 				Expect(cipher).To(MatchRegexp("ECDHE-RSA.+"))
 			}
 
-			fmt.Println(tls_version, cipher, user, host)
 		}
 	})
 })

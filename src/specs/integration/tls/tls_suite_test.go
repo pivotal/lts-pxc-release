@@ -1,6 +1,7 @@
 package tls_test
 
 import (
+	"os"
 	"testing"
 
 	helpers "specs/test_helpers"
@@ -15,10 +16,9 @@ func TestTls(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	requiredEnvs := []string{
-		"MYSQL_HOST",
-		"MYSQL_USERNAME",
-		//"MYSQL_PASSWORD",
+	helpers.SetupBoshDeployment()
+
+	if os.Getenv("BOSH_ALL_PROXY") != "" {
+		helpers.SetupSocks5Proxy()
 	}
-	helpers.CheckForRequiredEnvVars(requiredEnvs)
 })

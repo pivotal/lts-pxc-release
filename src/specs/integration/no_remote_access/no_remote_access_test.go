@@ -11,7 +11,7 @@ import (
 var _ = Describe("CF PXC No Remote Admin Access", func() {
 
 	It("does not allow access to mysql from anywhere besides localhost", func() {
-		databaseConnection := helpers.DbConnNoDb()
+		databaseConnection := helpers.DbConn()
 
 		query := "show variables"
 		_, err := databaseConnection.Query(query)

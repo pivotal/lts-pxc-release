@@ -23,26 +23,6 @@ func DbSetup(db *sql.DB, tableName string) string {
 	return dbName
 }
 
-func DbConnNoDb() *sql.DB {
-	mysqlUsername := "root"
-	mysqlPassword, err := GetMySQLAdminPassword()
-	Expect(err).NotTo(HaveOccurred())
-	firstProxy, err := FirstProxyHost()
-	Expect(err).NotTo(HaveOccurred())
-
-	pxcConnectionString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/",
-		mysqlUsername,
-		mysqlPassword,
-		firstProxy,
-		3306)
-
-	databaseConnection, err := sql.Open("mysql", pxcConnectionString)
-	Expect(err).NotTo(HaveOccurred())
-
-	return databaseConnection
-}
-
 func DbConn() *sql.DB {
 	mysqlUsername := "root"
 	mysqlPassword, err := GetMySQLAdminPassword()
@@ -55,7 +35,7 @@ func DbConn() *sql.DB {
 
 func DbConnWithUser(mysqlUsername, mysqlPassword, mysqlHost string) *sql.DB {
 	pxcConnectionString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%d)/",
+		"%s:%s@tcp(%s:%d)/?tls=skip-verify",
 		mysqlUsername,
 		mysqlPassword,
 		mysqlHost,

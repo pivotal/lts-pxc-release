@@ -22,12 +22,9 @@ var _ = BeforeSuite(func() {
 		"BOSH_CLIENT",
 		"BOSH_CLIENT_SECRET",
 		"BOSH_DEPLOYMENT",
-		"MYSQL_USERNAME",
-		"MYSQL_PASSWORD",
-		"PROXY_USERNAME",
-		"PROXY_PASSWORD",
 	}
 	helpers.CheckForRequiredEnvVars(requiredEnvs)
+	helpers.SetupBoshDeployment()
 
 	if os.Getenv("BOSH_ALL_PROXY") != "" {
 		helpers.SetupSocks5Proxy()

@@ -1,10 +1,13 @@
 package no_remote_access_test
 
 import (
+	"os"
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
 	helpers "specs/test_helpers"
-	"testing"
 )
 
 func TestScaling(t *testing.T) {
@@ -13,10 +16,9 @@ func TestScaling(t *testing.T) {
 }
 
 var _ = BeforeSuite(func() {
-	requiredEnvs := []string{
-		"MYSQL_HOST",
-		"MYSQL_USERNAME",
-		"MYSQL_PASSWORD",
+	helpers.SetupBoshDeployment()
+
+	if os.Getenv("BOSH_ALL_PROXY") != "" {
+		helpers.SetupSocks5Proxy()
 	}
-	helpers.CheckForRequiredEnvVars(requiredEnvs)
 })
