@@ -1,6 +1,13 @@
 ---
 name: pxc-mysql
 
+provides:
+- name: mysql-backup-user-creds
+  type: mysql-backup-user-creds
+  properties:
+  - msql_backup_username
+  - mysql_backup_password
+
 templates:
   disable_mysql_cli_history.sh.erb: config/disable_mysql_cli_history.sh
   audit_logs.logrotate.erb: config/mysql_clustered_audit_logs.logrotate
@@ -71,6 +78,14 @@ properties:
     default: false
   roadmin_password:
     description: 'Required when roadmin_enabled is true. Password for the MySQL server read-only admin user.'
+
+
+  # Backup User
+  mysql_backup_username:
+    description: Username for mysql-backup user
+    default: 'mysql-backup'
+  mysql_backup_password:
+    description: Password for mysql-backup user
 
 
   cli_history:
