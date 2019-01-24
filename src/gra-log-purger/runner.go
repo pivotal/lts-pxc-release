@@ -3,10 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"os"
 	"os/exec"
-	"strconv"
+	"path/filepath"
 	"time"
 )
 
@@ -31,20 +31,63 @@ var pidfile = flag.String(
 func main() {
 	flag.Parse()
 
-	err := ioutil.WriteFile(*pidfile, []byte(strconv.Itoa(os.Getpid())), 0644)
+	// err := ioutil.WriteFile(*pidfile, []byte(strconv.Itoa(os.Getpid())), 0644)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	dir, err := os.Open(*graLogDir)
 	if err != nil {
-		panic(err)
+		LogErrorWithTimestamp(err)
+		os.Exit(1)
 	}
 
 	for {
-		out, err := runCommand("sh", "/var/vcap/jobs/gra-log-purger/bin/gra-log-purger.sh", *graLogDir, strconv.Itoa(*graLogDaysToKeep))
-		if err != nil {
-			LogErrorWithTimestamp(err)
-		}
-		LogWithTimestamp(out)
+		deleted, failed := findGraLogs(dir)
+		LogWithTimestamp(fmt.Sprintf("Deleted %v files, failed to delete %v files\n", deleted, failed))
 		LogWithTimestamp("Sleeping for one hour\n")
 		time.Sleep(1 * time.Hour)
 	}
+}
+
+func findGraLogs(dir *os.File) (int64, int64) {
+	now := time.Now()
+	deleteOlderThan := now.Add(-(time.Duration(*graLogDaysToKeep) * time.Hour * 24))
+
+	var (
+		deleted int64
+		failed  int64
+	)
+
+	for {
+		// files, err := dir.Readdir(1024)
+		files, err := dir.Readdir(1024)
+		if err != nil && err != io.EOF {
+			LogErrorWithTimestamp(err)
+		}
+
+		if len(files) == 0 && err == io.EOF {
+			break
+		}
+
+		for _, file := range files {
+			if deleteOlderThan.Before(file.ModTime()) {
+				// TODO don't delete all of the mysql data dir because that's crazy
+				// TODO possibly find a way to glob with depth of 0 (is not recursive)
+				filePath := filepath.Clean(fmt.Sprintf("%s/%s", dir.Name(), file.Name()))
+				err := os.Remove(filePath)
+				if err != nil {
+					failed++
+					LogErrorWithTimestamp(err)
+				} else {
+					fmt.Printf("%s\n", filePath)
+					deleted++
+				}
+			}
+		}
+	}
+
+	return deleted, failed
 }
 
 // Runs command with stdout and stderr pipes connected to process
