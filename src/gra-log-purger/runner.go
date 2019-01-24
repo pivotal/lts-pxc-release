@@ -74,6 +74,7 @@ func findGraLogs(dir *os.File) (int64, int64) {
 			if deleteOlderThan.Before(file.ModTime()) {
 				// TODO don't delete all of the mysql data dir because that's crazy
 				// TODO possibly find a way to glob with depth of 0 (is not recursive)
+				// TODO rename file to main.go
 				filePath := filepath.Clean(fmt.Sprintf("%s/%s", dir.Name(), file.Name()))
 				err := os.Remove(filePath)
 				if err != nil {
