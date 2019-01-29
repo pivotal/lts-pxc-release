@@ -8,6 +8,6 @@ mkdir -p ${GOPATH}/src
 
 mv github.com ${GOPATH}/src
 
-go build -o ${BOSH_INSTALL_TARGET}/bin/proxy github.com/cloudfoundry-incubator/switchboard
+go build -o ${BOSH_INSTALL_TARGET}/bin/proxy github.com/pivotal/lts-switchboard
 
-cp -r src/github.com/cloudfoundry-incubator/switchboard/static  ${BOSH_INSTALL_TARGET}/static
+cp -r src/github.com/pivotal/lts-switchboard/static  ${BOSH_INSTALL_TARGET}/static
