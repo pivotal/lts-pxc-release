@@ -45,5 +45,10 @@
     config[:Proxy][:InactiveMysqlPort] = inactive_mysql_port
   end
 
+  if p('consul_enabled')
+    config[:ConsulCluster] = 'http://127.0.0.1:8500'
+    config[:ConsulServiceName] = p('consul_service_name')
+  end
+
   JSON.pretty_generate(config)
 %>
