@@ -1,0 +1,20 @@
+---
+- type: replace
+  path: /releases/-
+  value:
+    name: "consul"
+    version: "latest"
+
+- type: replace
+  path: /instance_groups/name=proxy/jobs/-
+  value:
+    release: consul
+    name: consul_agent
+    consumes:
+      consul_common: {from: consul_common_link, deployment: cf}
+      consul_server: {from: consul_server_link, deployment: cf}
+      consul_client: {from: consul_client_link, deployment: cf}
+
+- type: replace
+  path: /instance_groups/name=proxy/jobs/name=proxy/properties/consul_enabled?
+  value: true
