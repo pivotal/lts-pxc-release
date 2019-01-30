@@ -3,6 +3,5 @@ name: proxy
 dependencies:
   - golang-1.9-linux
 files:
-  - github.com/pivotal/lts-switchboard/static/**/* # static UI files
-  - github.com/pivotal/lts-switchboard/**/*.go
+  - github.com/pivotal/lts-switchboard/**
   - github.com/cloudfoundry-incubator/galera-healthcheck/**/*.go
