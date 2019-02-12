@@ -26,7 +26,7 @@ case $1 in
 
     ulimit -n <%= link('mysql').p('max_open_files') %> # HIGH Ulimit for SST of lots of tables (in case we run the bootstrap errand)
 
-    su - vcap -c -o pipefail \
+    chpst -u vcap:vcap bash -c -o pipefail \
       "$package_dir/bin/galera-agent \
         -configPath=$job_dir/config/galera-agent-config.yaml \
         >>$log_dir/galera-agent.stdout.log \

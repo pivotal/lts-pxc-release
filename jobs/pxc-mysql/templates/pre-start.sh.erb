@@ -114,7 +114,7 @@ chown -R vcap:vcap ${datadir}
 
 rm -f /etc/my.cnf
 
-GALERA_INIT_PREFIX_CMD="su vcap -c -o pipefail" ${PXC_JOB_DIR}/bin/pre-start-execution
+GALERA_INIT_PREFIX_CMD="chpst -u vcap:vcap bash -c -o pipefail" ${PXC_JOB_DIR}/bin/pre-start-execution
 
 if [ -d "/var/vcap/store/mysql" -a ! -f "/var/vcap/store/migrated-successfully" ]; then
   node_count=<%= link('mysql').instances.length %>

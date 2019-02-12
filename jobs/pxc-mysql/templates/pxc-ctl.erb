@@ -69,7 +69,7 @@ case $1 in
     pid_guard $PIDFILE $PROC_NAME
 
     echo "start script: starting galera-init..."
-    su - vcap -c -o pipefail \
+    chpst -u vcap:vcap bash -c -o pipefail \
     "TMPDIR=/var/vcap/data/pxc-mysql/tmp PATH=$PATH PERL5LIB=$PERL5LIB $PXC_CTRL_PACKAGE/bin/galera-init \
              -configPath=$CONFIG_FILE \
              >> $LOG_FILE 2>&1" &
