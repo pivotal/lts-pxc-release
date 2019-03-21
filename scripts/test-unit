@@ -20,7 +20,7 @@ go install -v github.com/onsi/ginkgo/ginkgo
 go get github.com/maxbrunsfeld/counterfeiter
 
 echo -e "\n>>>>>>>> Testing Switchboard..."
-"${RELEASE_DIR}/src/github.com/cloudfoundry-incubator/switchboard/bin/test" "$@"
+"${RELEASE_DIR}/src/github.com/pivotal/lts-switchboard/bin/test" "$@"
 
 echo -e "\n>>>>>>>> Testing Galera Healthcheck..."
 "${RELEASE_DIR}/src/github.com/cloudfoundry-incubator/galera-healthcheck/bin/test" "$@"
